@@ -37,6 +37,8 @@ glmmLasso_MultLambdas <- function(fix, rnd, data, family, lambdas, ...)
                                  lambda = lambdas[1],
                                  ...)
     
+    # modList[[1]] <- mod1
+    
     # Delta is matrix containing the estimates of fixed and random effects 
     # (columns) for each iteration (rows) of the main algorithm (i.e. before 
     # the final re-estimation step is performed, see details).
@@ -51,12 +53,15 @@ glmmLasso_MultLambdas <- function(fix, rnd, data, family, lambdas, ...)
     Q.start <- mod1$Q_long[[mod1$conv.step + 1]]
     
     # building the controlList as the first starting control parameter for loop
-    controlList <- list(start=Delta.start, q_start=Q.start)
+    controlList <- list(start=Delta.start, 
+                        q_start=as.data.frame(Q.start)
+    )
    
     # calling glmmLasso for each lambda value and after each fit, controlList
     # gets updated with the lastest model's coefficient to increase speed
-        for (l in seq_along(lambdas))
+    for (l in seq_along(lambdas))
     {
+        message(sprintf('Lambda: %s\n', lambdas[l]))
         modList[[l]] <- glmmLasso::glmmLasso(fix = fix,
                                            rnd = rnd,
                                            data = data,
@@ -67,31 +72,40 @@ glmmLasso_MultLambdas <- function(fix, rnd, data, family, lambdas, ...)
         
         Delta.start <- modList[[l]]$Deltamatrix[modList[[l]]$conv.step, ]
         Q.start <- modList[[l]]$Q_long[[modList[[l]]$conv.step + 1]]
-        controlList <- list(start=Delta.start,q_start=Q.start)
+        controlList <- list(start=Delta.start, 
+                            q_start=as.data.frame(Q.start))
         
     }
     
     # the function returns  a list of glmmLasso models 
+    
+    class(modList) <- 'glmmLasso_MultLambdas'
+    
     return(modList)
-
 }
-
-library(glmmLasso)
-data("soccer")
-## generalized additive mixed model
-## grid for the smoothing parameter
-
-## center all metric variables so that also the starting values with glmmPQL are in the correct scaling
-
-soccer[,c(4,5,9:16)]<-scale(soccer[,c(4,5,9:16)],center=T,scale=T)
-soccer<-data.frame(soccer)
-
-
-glmmLasso_MultLambdas(fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out, 
-                  rnd = list(team =~ 1 + ave.attend),
-                  data = soccer, 
-                  family = poisson(link = log), 
-                  lambda = seq(from = 500, to = 1, by = -5))
+# 
+# library(glmmLasso)
+# data("soccer")
+# ## generalized additive mixed model
+# ## grid for the smoothing parameter
+# 
+# ## center all metric variables so that also the starting values with glmmPQL are in the correct scaling
+# 
+# soccer[,c(4,5,9:16)]<-scale(soccer[,c(4,5,9:16)],center=T,scale=T)
+# soccer<-data.frame(soccer)
+# 
+# 
+# bob <- glmmLasso_MultLambdas(fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out, 
+#                   rnd = list(team =~ 1 + ave.attend),
+#                   data = soccer, 
+#                   family = poisson(link = log), 
+#                   lambda = seq(from = 500, to = 1, by = -5))
+# 
+# dude <- glmmLasso::glmmLasso(fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out, 
+#                       rnd = list(team =~ 1),
+#                       data = soccer, 
+#                       family = poisson(link = log), 
+#                       lambda = 500)
     
 
 

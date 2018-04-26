@@ -1,0 +1,37 @@
+
+
+
+cv.glmmLasso <- function(fix, rnd, data, family, kfold, step, ...)
+{
+    
+    # building randomIndices to cut up data for cross-validation
+    randomIndices <- sample(nrow(data))
+    
+    
+    # building data frame to map a specific row to kth group  
+    rowDF <- tibble::tibble(
+        row=seq(nrow(data)),
+        group=sample(rep(seq(kfold), length.out=nrow(data)), replace = FALSE)
+    )
+    
+    # sorting by group 
+    rowDF <- rowDF %>% dplyr::arrange(group)
+    
+    # instantiating the standard set of lambdas, lowering by step
+    lambdas = seq(from = 500, to = 1, by = -step)
+    
+    for(k in unique(rowDF$group))
+    {
+        testIndices <- rowDF %>% filter(group == k) %>% pull(row)
+        trainIndices <- -testIndices
+        
+        modk <- glmmLasso_MultLambdas(fix = fix,
+                              rnd = rnd,
+                              data = data,
+                              family = family,
+                              lambdas = lambdas,...)
+        # continue here once have written the compute error function and predict function
+        
+    }
+    
+}

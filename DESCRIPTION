@@ -9,3 +9,4 @@ Encoding: UTF-8
 LazyData: true
 BugReports: https://github.com/thepira/cv.glmmLasso/issues
 Imports: glmmLasso
+Suggests: testthat
