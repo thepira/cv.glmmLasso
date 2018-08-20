@@ -2,7 +2,7 @@
 #' @title glmmLasso_MultLambdas
 #' @description Variable selection using glmmLasso for multiple lambdas values  
 #' @details Build multiple models given a sequence of lambda values
-#' @author Pira Jitngamplang, Jared Lander
+#' @author Pirapong Jitngamplang, Jared Lander
 #' @export
 #' @param fix A two-sided linear formula object describing the fixed-effects part of the model, with the response on the left of a ~ operator and the terms, separated by + operators, on the right. For categorical covariables use as.factor(.) in the formula. Note, that the corresponding dummies are treated as a group and are updated blockwise
 #' @param rnd A two-sided linear formula object describing the random-effects part of the model, with the grouping factor on the left of a ~ operator and the random terms, separated by + operators, on the right; aternatively, the random effects design matrix can be given directly (with suitable column names). If set to NULL, no random effects are included.
@@ -20,7 +20,14 @@
 #' 
 #'  
 
-glmmLasso_MultLambdas <- function(fix, rnd, data, family, lambdas, ...)
+glmmLasso_MultLambdas <- function(fix, rnd, data, family, 
+                                  lambdas = glmmLasso::buildLambdas(
+                                      lambdaMax = glmmLasso::computeLambdaMax(fix = fix,
+                                                                              rnd = rnd,
+                                                                              data = data),
+                                      nlambdas = nlambdas,
+                                      lambda.min.ratio=ifelse(nobs < nvars, 0.01, 0.0001)), 
+                                  nlambdas, ...)
 {
 
     # instantiating list object to hold the model outputs 
@@ -32,14 +39,37 @@ glmmLasso_MultLambdas <- function(fix, rnd, data, family, lambdas, ...)
     # estimates corresponding to a lambda is used as the starting value for
     # the next smaller lambda  
     
+    # defining the number of observation
+    nobs <- nrow(data)
+    
+    # defining the number of preditors based on the number of terms in fix formula
+    nvars <- length(attr(terms(fix), 'term.labels'))
+    
+    # calculating lambda max
+    lambda.max = glmmLasso::computeLambdaMax(fix = fix,
+                                rnd = rnd,
+                                data = data)
+    
+    # building the lambda vector
+    lambdas = glmmLasso::buildLambdas(lambdaMax = glmmLasso::computeLambdaMax(fix = fix,
+                                                                              rnd = rnd,
+                                                                              data = data), 
+                                      nlambdas = nlambdas, 
+                                      lambda.min.ratio=ifelse(nobs < nvars, 0.01, 0.0001))
+    
+    
     mod1 <- glmmLasso::glmmLasso(fix = fix,
                                  rnd = rnd,
                                  data = data,
                                  family = family,
                                  lambda = lambdas[1],
+                                 nlambdas = nlambdas,
                                  ...)
     
     # modList[[1]] <- mod1
+    
+    # passing Q.start and Delta.start is modeled from glmmLasso demo file
+    # from the "More Elegant section" 
     
     # Delta is matrix containing the estimates of fixed and random effects 
     # (columns) for each iteration (rows) of the main algorithm (i.e. before 
@@ -69,6 +99,7 @@ glmmLasso_MultLambdas <- function(fix, rnd, data, family, lambdas, ...)
                                            data = data,
                                            family = family,
                                            lambda = lambdas[l],
+                                           nlambdas = nlambdas,
                                            control = controlList,
                                            ...)
         
@@ -79,7 +110,7 @@ glmmLasso_MultLambdas <- function(fix, rnd, data, family, lambdas, ...)
         
     }
     
-    # the function returns  a list of glmmLasso models 
+    # the function returns a list of glmmLasso models 
     
     class(modList) <- 'glmmLasso_MultLambdas'
     
@@ -87,29 +118,30 @@ glmmLasso_MultLambdas <- function(fix, rnd, data, family, lambdas, ...)
 }
 
 
-# 
-# library(glmmLasso)
-# data("soccer")
-# ## generalized additive mixed model
-# ## grid for the smoothing parameter
-# 
-# ## center all metric variables so that also the starting values with glmmPQL are in the correct scaling
-# 
-# soccer[,c(4,5,9:16)]<-scale(soccer[,c(4,5,9:16)],center=T,scale=T)
-# soccer<-data.frame(soccer)
-# 
-# 
-# bob <- glmmLasso_MultLambdas(fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out, 
-#                   rnd = list(team =~ 1 + ave.attend),
-#                   data = soccer, 
-#                   family = poisson(link = log), 
-#                   lambda = seq(from = 500, to = 1, by = -5))
-# 
-# dude <- glmmLasso::glmmLasso(fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out, 
-#                       rnd = list(team =~ 1),
-#                       data = soccer, 
-#                       family = poisson(link = log), 
-#                       lambda = 500)
-    
+
+
+ library(glmmLasso)
+ data("soccer")
+ ## generalized additive mixed model
+ ## grid for the smoothing parameter
+
+ ## center all metric variables so that also the starting values with glmmPQL are in the correct scaling
+
+ soccer[,c(4,5,9:16)]<-scale(soccer[,c(4,5,9:16)],center=T,scale=T)
+ soccer<-data.frame(soccer)
+
+
+bob <- glmmLasso_MultLambdas(fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out,
+                   rnd = list(team =~ 1 + ave.attend),
+                   data = soccer,
+                   family = poisson(link = log)
+                    )
+
+dude <- glmmLasso::glmmLasso(fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out,
+                       rnd = list(team =~ 1),
+                       data = soccer,
+                       family = poisson(link = log),
+                       lambda = 500)
+
 
 

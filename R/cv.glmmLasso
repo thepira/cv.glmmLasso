@@ -1,9 +1,10 @@
 
 
 
-cv.glmmLasso <- function(fix, rnd, data, family, kfold, step, ...)
+cv.glmmLasso <- function(fix, rnd, data, family, kfold, lambdas, nlambdas, ...)
 {
-    
+    # need to rewrite this with rsample
+    # 
     # building randomIndices to cut up data for cross-validation
     randomIndices <- sample(nrow(data))
     
@@ -18,7 +19,7 @@ cv.glmmLasso <- function(fix, rnd, data, family, kfold, step, ...)
     rowDF <- rowDF %>% dplyr::arrange(group)
     
     # instantiating the standard set of lambdas, lowering by step
-    lambdas = seq(from = 500, to = 1, by = -step)
+    #lambdas = seq(from = 500, to = 1, by = -step)
     
     for(k in unique(rowDF$group))
     {
@@ -29,9 +30,12 @@ cv.glmmLasso <- function(fix, rnd, data, family, kfold, step, ...)
                               rnd = rnd,
                               data = data,
                               family = family,
-                              lambdas = lambdas,...)
+                              lambdas = lambdas,
+                              nlambdas = nlambdas,
+                              ...)
         # continue here once have written the compute error function and predict function
-        
+        # as we need to generate the error matrix (5 folds row by 100 col of lambda) to calculate
+        # the column mean of each lambda 1 - lambda 100.
     }
     
 }
