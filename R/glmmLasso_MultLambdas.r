@@ -21,18 +21,12 @@
 #'  
 
 glmmLasso_MultLambdas <- function(fix, rnd, data, family, 
-                                  lambdas = glmmLasso::buildLambdas(
-                                      lambdaMax = glmmLasso::computeLambdaMax(fix = fix,
-                                                                              rnd = rnd,
-                                                                              data = data),
-                                      nlambdas = nlambdas,
-                                      lambda.min.ratio=ifelse(nobs < nvars, 0.01, 0.0001)), 
-                                  nlambdas, ...)
+                                  lambdas,
+                                  nlambdas = 100,
+                                  lambda.min.ratio=ifelse(nobs < nvars, 0.01, 0.0001), 
+                                  ...)
 {
 
-    # instantiating list object to hold the model outputs 
-    modList <- vector(mode = 'list', length = length(lambdas))
-    
     # fitting first model to generate initial inputs for control parameter
     # here we use the first lambda (highest penalty) to start
     # based glmmLasso's author, glmmLasso is faster when final coefficient
@@ -45,26 +39,26 @@ glmmLasso_MultLambdas <- function(fix, rnd, data, family,
     # defining the number of preditors based on the number of terms in fix formula
     nvars <- length(attr(terms(fix), 'term.labels'))
     
-    # calculating lambda max
-    lambda.max = glmmLasso::computeLambdaMax(fix = fix,
-                                rnd = rnd,
-                                data = data)
-    
-    # building the lambda vector
-    lambdas = glmmLasso::buildLambdas(lambdaMax = glmmLasso::computeLambdaMax(fix = fix,
-                                                                              rnd = rnd,
-                                                                              data = data), 
-                                      nlambdas = nlambdas, 
-                                      lambda.min.ratio=ifelse(nobs < nvars, 0.01, 0.0001))
+    if (is.null(lambdas))
+    {
+        
+        # calculating lambda max
+        lambda.max <- computeLambdaMax(fix = fix,
+                                       rnd = rnd,
+                                       data = data)
+        # building the lambda vector
+        lambdas <- buildLambdas(lambdaMax = lambda.max, 
+                                nlambdas = nlambdas, 
+                                lambda.min.ratio=ifelse(nobs < nvars, 0.01, 0.0001))   
+    }
     
     
     mod1 <- glmmLasso::glmmLasso(fix = fix,
-                                 rnd = rnd,
-                                 data = data,
-                                 family = family,
-                                 lambda = lambdas[1],
-                                 nlambdas = nlambdas,
-                                 ...)
+                      rnd = rnd,
+                      data = data,
+                      family = family,
+                      lambda = lambdas[1],
+                      ...)
     
     # modList[[1]] <- mod1
     
@@ -89,25 +83,28 @@ glmmLasso_MultLambdas <- function(fix, rnd, data, family,
                         q_start=as.data.frame(Q.start)
     )
    
+    # initializing list of object to hold the model outputs 
+    modList <- vector(mode = 'list', length = length(lambdas))
+    
     # calling glmmLasso for each lambda value and after each fit, controlList
     # gets updated with the lastest model's coefficient to increase speed
     for (l in seq_along(lambdas))
     {
         message(sprintf('Lambda: %s\n', lambdas[l]))
-        modList[[l]] <- glmmLasso::glmmLasso(fix = fix,
-                                           rnd = rnd,
-                                           data = data,
-                                           family = family,
-                                           lambda = lambdas[l],
-                                           nlambdas = nlambdas,
-                                           control = controlList,
-                                           ...)
+        fit <- glmmLasso::glmmLasso(fix = fix,
+                                    rnd = rnd,
+                                    data = data,
+                                    family = family,
+                                    lambda = lambdas[l],
+                                    control = controlList,
+                                    ...)
+        modList[[l]] <- fit
         
-        Delta.start <- modList[[l]]$Deltamatrix[modList[[l]]$conv.step, ]
-        Q.start <- modList[[l]]$Q_long[[modList[[l]]$conv.step + 1]]
+        Delta.start <- rbind(Delta.start,fit$Deltamatrix[fit$conv.step, ])
+        Q.start <- c(Q.start, fit$Q_long[[fit$conv.step + 1]])
         controlList <- list(start=Delta.start, 
                             q_start=as.data.frame(Q.start))
-        
+                
     }
     
     # the function returns a list of glmmLasso models 
@@ -119,29 +116,6 @@ glmmLasso_MultLambdas <- function(fix, rnd, data, family,
 
 
 
-
- library(glmmLasso)
- data("soccer")
- ## generalized additive mixed model
- ## grid for the smoothing parameter
-
- ## center all metric variables so that also the starting values with glmmPQL are in the correct scaling
-
- soccer[,c(4,5,9:16)]<-scale(soccer[,c(4,5,9:16)],center=T,scale=T)
- soccer<-data.frame(soccer)
-
-
-bob <- glmmLasso_MultLambdas(fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out,
-                   rnd = list(team =~ 1 + ave.attend),
-                   data = soccer,
-                   family = poisson(link = log)
-                    )
-
-dude <- glmmLasso::glmmLasso(fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out,
-                       rnd = list(team =~ 1),
-                       data = soccer,
-                       family = poisson(link = log),
-                       lambda = 500)
 
 
 

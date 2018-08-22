@@ -1,6 +1,8 @@
 # this function compute the max lambda based on formula given
 
 
+
+
 computeLambdaMax <- function(fix, rnd, data)
 {
     # converting formula into matrices to do lambdaMax calculation
@@ -13,7 +15,7 @@ computeLambdaMax <- function(fix, rnd, data)
     return(lambdaMax)
 }
 
-buildLambdas <- function(lambdaMax = 500, 
+buildLambdas <- function(lambdaMax, 
                          nlambda = 100, 
                          lambda.min.ratio=ifelse(nobs < nvars, 0.01, 0.0001))
 {

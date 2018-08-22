@@ -1,7 +1,7 @@
 
 
 
-cv.glmmLasso <- function(fix, rnd, data, family, kfold, lambdas, nlambdas, ...)
+cv.glmmLasso <- function(fix, rnd, data, family, kfold, lambdas, nlambdas, lambda.min.ratio, ...)
 {
     # need to rewrite this with rsample
     # 
@@ -26,13 +26,17 @@ cv.glmmLasso <- function(fix, rnd, data, family, kfold, lambdas, nlambdas, ...)
         testIndices <- rowDF %>% filter(group == k) %>% pull(row)
         trainIndices <- -testIndices
         
+       
+        
+        
         modk <- glmmLasso_MultLambdas(fix = fix,
-                              rnd = rnd,
-                              data = data,
-                              family = family,
-                              lambdas = lambdas,
-                              nlambdas = nlambdas,
-                              ...)
+                                      rnd = rnd,
+                                      data = data,
+                                      family = family,
+                                      lambdas = lambdas,
+                                      nlambdas = nlambdas,
+                                      lambda.min.ratio = lambda.min.ratio,
+                                      ...)
         # continue here once have written the compute error function and predict function
         # as we need to generate the error matrix (5 folds row by 100 col of lambda) to calculate
         # the column mean of each lambda 1 - lambda 100.

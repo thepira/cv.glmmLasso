@@ -1,7 +1,7 @@
 
 # need to build type checks for parameter passing 
 
-cv.glmmLasso <- function(fix, rnd, data, family, switch.NR, final.re, control, kfold)
+cv.glmmLasso_old <- function(fix, rnd, data, family, switch.NR, final.re, control, kfold)
 {
     #storing original paramters
    
@@ -84,7 +84,7 @@ cv.glmmLasso <- function(fix, rnd, data, family, switch.NR, final.re, control, k
                                                        wt=rep(1,length(y.hat))))
             }
         }
-        browser()
+     
         print(sum(Devianz_ma[j,]))
        
     }
