@@ -1,18 +1,29 @@
 
 
 
-cv.glmmLasso <- function(fix, rnd, data, family, kfold, lambdas, nlambdas, lambda.min.ratio, ...)
+cv.glmmLasso <- function(fix, rnd, data, family=gaussian, 
+                         kfold, lambdas, nlambdas, lambda.min.ratio, 
+                         loss=switch(family()$family, 'gaussian' = Metrics::mse,
+                                     'binomial' = Metrics::logLoss),
+                         ...)
 {
-    # need to rewrite this with rsample
+    # TODO: find appropriate loss function for poisson (deviance), multinomial (mlogloss)
+    # TODO: need to rewrite this with rsample
+    # TODO: write documentation for all the functions
+    # TODO: look at what cv.glmmnet returns and try to mimic as much as possible
+    # TODO: think about the n x number of lambdas fits, and taking averages
+    # TODO: check that response var line works. 
+    # TODO: think about fitting lambda to the entire dataset + and then -> check glmnet documentations 
     # 
     # building randomIndices to cut up data for cross-validation
     randomIndices <- sample(nrow(data))
     
-    
-    # building data frame to map a specific row to kth group  
+    # building data frame to map a specific row to kth group
+    # column 1 is the row, column 2 is a randomly assigned group
+    # number of groups is determined by kfold value  
     rowDF <- tibble::tibble(
-        row=seq(nrow(data)),
-        group=sample(rep(seq(kfold), length.out=nrow(data)), replace = FALSE)
+        row = seq(nrow(data)),
+        group = sample(rep(seq(kfold), length.out=nrow(data)), replace = FALSE)
     )
     
     # sorting by group 
@@ -21,25 +32,38 @@ cv.glmmLasso <- function(fix, rnd, data, family, kfold, lambdas, nlambdas, lambd
     # instantiating the standard set of lambdas, lowering by step
     #lambdas = seq(from = 500, to = 1, by = -step)
     
+    foldLoss <- vector(mode = 'list', length = unique(rowDF$group))
     for(k in unique(rowDF$group))
     {
-        testIndices <- rowDF %>% filter(group == k) %>% pull(row)
+        testIndices <- dplyr::filter(rowDF, .data$group == k) %>% dplyr::pull(row)
         trainIndices <- -testIndices
         
-       
-        
-        
-        modk <- glmmLasso_MultLambdas(fix = fix,
+        # fitting model
+        trained_modk <- glmmLasso_MultLambdas(fix = fix,
                                       rnd = rnd,
-                                      data = data,
+                                      data = data %>% dplyr::slice(trainIndices),
                                       family = family,
                                       lambdas = lambdas,
                                       nlambdas = nlambdas,
                                       lambda.min.ratio = lambda.min.ratio,
                                       ...)
+        
+        # running prediction on the trained model over the list
+        predictions <- predict(trained_modk, data %>% slice(testIndices))
+        
+        response_var <- fix[[2]] %>% as.character()
+        
+        lossValue <- loss(trueValues=data %>% slice(testIndices) %>% pull(response_var),
+                                    predictedValues=predictions)
+        # need to pass response of the formula into pull()
+        
+        foldLoss[k] <- lossValue
+        
         # continue here once have written the compute error function and predict function
         # as we need to generate the error matrix (5 folds row by 100 col of lambda) to calculate
         # the column mean of each lambda 1 - lambda 100.
     }
+    
+    return(list(LossMean=mean(foldLoss), LossSD=sd(foldLoss)))
     
 }

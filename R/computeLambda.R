@@ -10,8 +10,8 @@ computeLambdaMax <- function(fix, rnd, data)
     x <- useful::build.x(fix, data)
     
     # N*alpha*lambdaMax = max_l(<x_l, y>)
-    abs_dotprod <- abs(crossprod(x, y))
-    lambdaMax <- max(abs_dotprod) / nrow(data)
+    lambdaMax <- max(abs(crossprod(x, y))) / nrow(data)
+
     return(lambdaMax)
 }
 

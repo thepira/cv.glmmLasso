@@ -49,7 +49,7 @@ glmmLasso_MultLambdas <- function(fix, rnd, data, family,
         # building the lambda vector
         lambdas <- buildLambdas(lambdaMax = lambda.max, 
                                 nlambdas = nlambdas, 
-                                lambda.min.ratio=ifelse(nobs < nvars, 0.01, 0.0001))   
+                                lambda.min.ratio= lambda.min.ratio)   
     }
     
     
