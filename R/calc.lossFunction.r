@@ -1,35 +1,36 @@
 # modified from calc.deviance in dismo package - credit to Robert Hijmans
 
-calc.deviance <- function (actual, predicted, weights = rep(1, length(obs)), calc.mean = TRUE) 
+calc_mse <- function(actual, predicted)
+    
 {
-    obs <- actual
-    pred <- predicted
+    return(colMeans((actual - predicted)^2)) 
+}
+
+calc_logloss <- function(actual, predicted)
+{
     
-    if (length(obs) != length(pred)) {
-        stop("observations and predictions must be of equal length")
-    }
-    y_i <- obs
-    u_i <- pred 
-        deviance.contribs <- ifelse(y_i == 0, 0, (y_i * log(y_i/u_i))) - (y_i - u_i)
-    deviance <- 2 * sum(deviance.contribs * weights)
+    score <- -(actual * log(predicted) + (1 - actual) * log(1 -predicted))
+    score[actual == predicted] <- 0
+    score[is.nan(score)] <- Inf
+    return(colMeans(score))
     
-    if (calc.mean) 
-        deviance <- deviance/length(obs)
-    return(deviance)
 }
 
 # modified from MultiLogLoss in MLMetrics package - credit to Yachen Yan
-calc.multilogloss <- function (actual, preditced) 
+calc_multilogloss <- function(actual, predicted) 
 {
-    y_true <- actual
-    y_pred <- predicted
-    
-    if (is.matrix(y_true) == FALSE) {
-        y_true <- model.matrix(~0 + ., data.frame(as.character(y_true)))
-    }
-    eps <- 1e-15
-    N <- nrow(y_pred)
-    y_pred <- pmax(pmin(y_pred, 1 - eps), eps)
-    MultiLogLoss <- (-1/N) * sum(y_true * log(y_pred))
-    return(MultiLogLoss)
+    return(apply(predicted, 2, MLmetrics::MultiLogLoss, y_true = actual)) 
 }
+
+calc_deviance <- function(actual, predicted, family = 'poisson',...)
+{
+    # return(apply(predicted, 2, function(x, ... = ...) {
+    #     dismo::calc.deviance(obs = actual, pred = x, ...)
+    # }) 
+    apply(predicted, 2, dismo::calc.deviance, obs = actual, family = family,
+          ...)
+}
+
+
+
+

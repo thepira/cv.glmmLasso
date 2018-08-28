@@ -21,7 +21,7 @@
 #'  
 
 glmmLasso_MultLambdas <- function(fix, rnd, data, family, 
-                                  lambdas,
+                                  lambdas = NULL,
                                   nlambdas = 100,
                                   lambda.min.ratio=ifelse(nobs < nvars, 0.01, 0.0001), 
                                   ...)
@@ -41,15 +41,13 @@ glmmLasso_MultLambdas <- function(fix, rnd, data, family,
     
     if (is.null(lambdas))
     {
-        
-        # calculating lambda max
-        lambda.max <- computeLambdaMax(fix = fix,
-                                       rnd = rnd,
-                                       data = data)
+
         # building the lambda vector
-        lambdas <- buildLambdas(lambdaMax = lambda.max, 
+        lambdas <- buildLambdas(fix = fix,
+                                rnd = rnd,
+                                data = data, 
                                 nlambdas = nlambdas, 
-                                lambda.min.ratio= lambda.min.ratio)   
+                                lambda.min.ratio= lambda.min.ratio)    
     }
     
     
@@ -116,6 +114,16 @@ glmmLasso_MultLambdas <- function(fix, rnd, data, family,
 
 
 
-
+predict.glmmLasso_MultLambdas <- function(object, newdata, ...)
+{
+    # instantiating list to hold nlambdas number of n x 1 vectors 
+    pred_vec_list <- vector(mode = 'list', length = length(object))
+    # storing returned vectors in a list 
+    pred_vec_list <- purrr::map(.x = object, .f = predict, newdata = newdata)
+    
+    pred_matrix <- do.call(what = cbind, args = pred_vec_list)
+    
+    return(pred_matrix)
+}
 
 

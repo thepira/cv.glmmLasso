@@ -2,18 +2,15 @@
 
 # switch allows us to do take the family arg as assign the appropriate loss function 
 cv.glmmLasso <- function(fix, rnd, data, family=gaussian, 
-                         kfold, lambdas, nlambdas, lambda.min.ratio, 
-                         loss=switch(family()$family, 'gaussian' = Metrics::mse,
-                                     'binomial' = Metrics::logLoss,
-                                     'multinomial' = cv.glmmLasso::calc.multilogloss,
-                                     'poisson' = cv.glmmLasso::calc.deviance),
+                         kfold, lambdas = NULL, nlambdas, lambda.min.ratio, 
+                         loss=switch(family()$family, 'gaussian' = calc_mse,
+                                     'binomial' = calc_logloss,
+                                     'multinomial' = calc_multilogloss,
+                                     'poisson' = calc_deviance),
                          ...)
 {
     # TODO: need to rewrite this with rsample
     # TODO: write documentation for all the functions
-    # TODO: look at what cv.glmmnet returns and try to mimic as much as possible
-    # TODO: think about the n x number of lambdas fits, and taking averages
-    # TODO: check that response var line works. 
     # TODO: think about fitting lambda to the entire dataset + and then -> check glmnet documentations 
     # 
     # building randomIndices to cut up data for cross-validation
@@ -21,13 +18,10 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian,
     # if lambda isn't specified by user, build the lambdas vector, this is static for all k folds
     if (is.null(lambdas))
     {
-        
-        # calculating lambda max
-        lambda.max <- computeLambdaMax(fix = fix,
-                                       rnd = rnd,
-                                       data = data)
         # building the lambda vector
-        lambdas <- buildLambdas(lambdaMax = lambda.max, 
+        lambdas <- buildLambdas(fix = fix,
+                                rnd = rnd,
+                                data = data, 
                                 nlambdas = nlambdas, 
                                 lambda.min.ratio= lambda.min.ratio)   
     }
@@ -50,7 +44,8 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian,
     numGroups <- unique(rowDF$group)
     
     #instantiating list of 
-    lossvaluesList <- vector(mode = 'list', length = numGroups)
+    lossVecList <- vector(mode = 'list', length = numGroups)
+    modList_foldk <- vector(mode = 'list', length = numGroups)
     
     for(k in numGroups)
     {
@@ -59,7 +54,7 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian,
         
         # fitting model
         # modList_foldk is a glmmLasso_MultLambdas object, which is a list of glmmLasso objects
-        modList_foldk <- glmmLasso_MultLambdas(fix = fix,
+        modList_foldk[[k]] <- glmmLasso_MultLambdas(fix = fix,
                                       rnd = rnd,
                                       data = data %>% dplyr::slice(trainIndices),
                                       family = family,
@@ -70,47 +65,70 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian,
         
        
         
-        # hacky way of getting the response variable out of the         response_var <- fix[[2]] %>% as.character()
+        # hacky way of getting the response variable out of the         
+        response_var <- fix[[2]] %>% as.character()
         
-        # employing the loss function in form loss(actual,predicted)
-        
-        # using loss function, calculating a list of loss values for each vector of prediction
-        # which comes from a glmmLasso model with a specific lambda 
-        actualData <- data %>% slice(testIndices) %>% pull(response_var)
+        # pulling out actual data
+        actualDataVector <- data %>% dplyr::slice(testIndices) %>% dplyr::pull(response_var)
        
         # predicting values for each of the glmmLasso model (100 lambda) 
-        predictionList <- map(modList_foldk, stats::predict)
+        # using matrix form for easier error calculation in loss()
+        # predictionMatrix <- purrr::map(.x = modList_foldk[k], .f = predict.glmmLasso_MultLambdas, 
+        #                             newdata = data %>% dplyr::slice(testIndices))
         
-        #TODO: Continue here thinking about how to store and calculate average errors. 
-        
+        predictionMatrix <- predict.glmmLasso_MultLambdas(
+            modList_foldk[[k]],
+            newdata = data %>% dplyr::slice(testIndices)
+        )
+            
+        # employing the loss function in form loss(actual,predicted)
+        # using loss function, calculating a list of loss values for each vector of prediction
+        # which comes from a glmmLasso model with a specific lambda 
         # storing loss values for each fold
+        lossVecList[k] <- loss(actual = actualDataVector, predicted = predictionMatrix)
         
-        for(n in nlambdas)
-        {
-            lossvalueList[[k]] <- loss(actual = actualData, predicted = predictionList)    
-        }
-        
-        
-        # old code
-        #lossValue <- loss(trueValues=data %>% slice(testIndices) %>% pull(response_var),
-        #                            predictedValues=predictionList)
-        # need to pass response of the formula into pull()
-        #foldLoss[k] <- lossValue
-        
-        # continue here once have written the compute error function and predict function
-        # as we need to generate the error matrix (5 folds row by 100 col of lambda) to calculate
-        # the column mean of each lambda 1 - lambda 100.
     }
     
+    #building matrix (k by nlambda) to help calculate cross-validated mean error
+    cvLossMatrix <- do.call(what = rbind, args = lossVecList)
+    cvm = colMeans(cvLossMatrix)
     
-    lossvaluesList[[1]][1]
+    # calculating sd, cv, up, down
+    cvsd <- apply(cvLossMatrix, 1, sd, na.rm = TRUE)
+    cvup <- cvm + cvsd
+    cvlo <- cvm - cvsd
+    nzero <- #?? which fold is this?? take a look at each glmmLasso objects for each lambda, count non-zero coef
+    
+    glmmLasso.fit <- glmmLasso::glmmLasso(fix = fix,
+                                          rnd = rnd,
+                                          data = data,
+                                          family = family,
+                                          lambda = lambda.1se,
+                                          ...)
+    
+    minIndex <- which.min(cvsd)    
+    lambda.min <- lambdas[minIndex]
+    
+    # figuring out the OneSEIndex with do-while style loop
+    OneSEIndex <- minIndex
+    repeat
+    {
+        if(cvup < cvsd[OneSEIndex])
+        {break}
+        OneSEIndex <- OneSEIndex + 1
+    }
+    
+    lambda.1se <- lambdas[OneSEIndex]
+        
+    
+    
     
     # mimicking cv.glmnet return objects
     return(list(lambdas,
                 cvm,
                 cvsd,
                 cvup,
-                cvdown,
+                cvlo,
                 nzero,
                 glmmLasso.fit,
                 lambda.min,
