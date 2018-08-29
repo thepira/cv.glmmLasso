@@ -1,9 +1,11 @@
 
 
 # switch allows us to do take the family arg as assign the appropriate loss function 
-cv.glmmLasso <- function(fix, rnd, data, family=gaussian, 
-                         kfold, lambdas = NULL, nlambdas, lambda.min.ratio, 
-                         loss=switch(family()$family, 'gaussian' = calc_mse,
+cv.glmmLasso <- function(fix, rnd, data, family= gaussian(link = "identity"), 
+                         kfold, lambdas = NULL, nlambdas = 100, 
+                         lambda.min.ratio = ifelse(nobs < nvars, 0.01, 0.0001), 
+                         loss=switch(family()$family, 
+                                     'gaussian' = calc_mse,
                                      'binomial' = calc_logloss,
                                      'multinomial' = calc_multilogloss,
                                      'poisson' = calc_deviance),
@@ -86,7 +88,7 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian,
         # which comes from a glmmLasso model with a specific lambda 
         # storing loss values for each fold
         lossVecList[k] <- loss(actual = actualDataVector, predicted = predictionMatrix)
-        
+        # each element of this list should be 1 x nlambda
     }
     
     #building matrix (k by nlambda) to help calculate cross-validated mean error
@@ -97,23 +99,27 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian,
     cvsd <- apply(cvLossMatrix, 1, sd, na.rm = TRUE)
     cvup <- cvm + cvsd
     cvlo <- cvm - cvsd
-    nzero <- #?? which fold is this?? take a look at each glmmLasso objects for each lambda, count non-zero coef
     
     glmmLasso.fit <- glmmLasso::glmmLasso(fix = fix,
                                           rnd = rnd,
                                           data = data,
                                           family = family,
-                                          lambda = lambda.1se,
+                                          lambdas = lambdas,
+                                          lambda.min.ratio = lambda.min.ratio,
                                           ...)
     
-    minIndex <- which.min(cvsd)    
+    
+    nzero <- #?? which fold is this?? take a look at each glmmLasso objects for each lambda, count non-zero coef
+    
+    
+    minIndex <- which.min(cvm)    
     lambda.min <- lambdas[minIndex]
     
     # figuring out the OneSEIndex with do-while style loop
     OneSEIndex <- minIndex
     repeat
     {
-        if(cvup < cvsd[OneSEIndex])
+        if(cvup < cvm[OneSEIndex])
         {break}
         OneSEIndex <- OneSEIndex + 1
     }

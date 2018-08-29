@@ -20,7 +20,8 @@
 #' 
 #'  
 
-glmmLasso_MultLambdas <- function(fix, rnd, data, family, 
+glmmLasso_MultLambdas <- function(fix, rnd, data, 
+                                  family = gaussian(link = "identity"), 
                                   lambdas = NULL,
                                   nlambdas = 100,
                                   lambda.min.ratio=ifelse(nobs < nvars, 0.01, 0.0001), 
@@ -47,16 +48,17 @@ glmmLasso_MultLambdas <- function(fix, rnd, data, family,
                                 rnd = rnd,
                                 data = data, 
                                 nlambdas = nlambdas, 
-                                lambda.min.ratio= lambda.min.ratio)    
+                                lambda.min.ratio = lambda.min.ratio)    
     }
     
-    
-    mod1 <- glmmLasso::glmmLasso(fix = fix,
-                      rnd = rnd,
-                      data = data,
-                      family = family,
-                      lambda = lambdas[1],
-                      ...)
+    # TODO: take out the first model fit. 
+    # 
+    # mod1 <- glmmLasso::glmmLasso(fix = fix,
+    #                   rnd = rnd,
+    #                   data = data,
+    #                   family = family,
+    #                   lambda = lambdas[1],
+    #                   ...)
     
     # modList[[1]] <- mod1
     
@@ -68,41 +70,63 @@ glmmLasso_MultLambdas <- function(fix, rnd, data, family,
     # the final re-estimation step is performed, see details).
     # Passing the set of estimates from the last iteration as the 
     # 'start' parameter of the controlList
-    Delta.start <- mod1$Deltamatrix[mod1$conv.step, ]
     
-    # Q_long is a list containing the estimates of the random effects 
-    # variance-covariance parameters for each iteration of the main algorithm.
-    # Passing the variance-covaiance matrix as the q_start parameter of
-    # the controlList 
-    Q.start <- mod1$Q_long[[mod1$conv.step + 1]]
-    
-    # building the controlList as the first starting control parameter for loop
-    controlList <- list(start=Delta.start, 
-                        q_start=as.data.frame(Q.start)
-    )
+    # Delta.start <- mod1$Deltamatrix[mod1$conv.step, ]
+    # 
+    # # Q_long is a list containing the estimates of the random effects 
+    # # variance-covariance parameters for each iteration of the main algorithm.
+    # # Passing the variance-covaiance matrix as the q_start parameter of
+    # # the controlList 
+    # 
+    # Q.start <- mod1$Q_long[[mod1$conv.step + 1]]
+    # 
+    # # building the controlList as the first starting control parameter for loop
+    # controlList <- list(start = Delta.start, 
+    #                     q_start = as.data.frame(Q.start))
    
     # initializing list of object to hold the model outputs 
     modList <- vector(mode = 'list', length = length(lambdas))
     
+    
+    controlList <- vector(mode = 'list', length = 2)
     # calling glmmLasso for each lambda value and after each fit, controlList
     # gets updated with the lastest model's coefficient to increase speed
     for (l in seq_along(lambdas))
     {
-        message(sprintf('Lambda: %s\n', lambdas[l]))
-        fit <- glmmLasso::glmmLasso(fix = fix,
-                                    rnd = rnd,
-                                    data = data,
-                                    family = family,
-                                    lambda = lambdas[l],
-                                    control = controlList,
-                                    ...)
-        modList[[l]] <- fit
         
-        Delta.start <- rbind(Delta.start,fit$Deltamatrix[fit$conv.step, ])
-        Q.start <- c(Q.start, fit$Q_long[[fit$conv.step + 1]])
-        controlList <- list(start=Delta.start, 
-                            q_start=as.data.frame(Q.start))
-                
+        if(l == 1)
+        {
+            message(sprintf('Lambda: %s\n', lambdas[l]))
+            fit <- glmmLasso::glmmLasso(fix = fix,
+                                        rnd = rnd,
+                                        data = data,
+                                        family = family,
+                                        lambda = lambdas[l],
+                                        ...)
+            modList[[l]] <- fit
+            Delta.start <- fit$Deltamatrix[fit$conv.step, ]
+            Q.start <- fit$Q_long[[fit$conv.step + 1]]
+            controlList <- list(start = Delta.start, 
+                                q_start = as.data.frame(Q.start))
+        }
+        if(l != 1)
+        {
+            message(sprintf('Lambda: %s\n', lambdas[l]))
+            fit <- glmmLasso::glmmLasso(fix = fix,
+                                        rnd = rnd,
+                                        data = data,
+                                        family = family,
+                                        lambda = lambdas[l],
+                                        control = controlList,
+                                        ...)
+            
+            modList[[l]] <- fit
+            Delta.start <- rbind(Delta.start, fit$Deltamatrix[fit$conv.step, ])
+            Q.start <- c(Q.start, fit$Q_long[[fit$conv.step + 1]])
+            controlList <- list(start = Delta.start, 
+                                q_start = as.data.frame(Q.start))
+        }
+        
     }
     
     # the function returns a list of glmmLasso models 
@@ -117,9 +141,10 @@ glmmLasso_MultLambdas <- function(fix, rnd, data, family,
 predict.glmmLasso_MultLambdas <- function(object, newdata, ...)
 {
     # instantiating list to hold nlambdas number of n x 1 vectors 
-    pred_vec_list <- vector(mode = 'list', length = length(object))
+    # pred_vec_list <- vector(mode = 'list', length = length(object))
     # storing returned vectors in a list 
-    pred_vec_list <- purrr::map(.x = object, .f = predict, newdata = newdata)
+    
+    pred_vec_list <- purrr::map(.x = object, .f = predict, newdata = as.data.frame(newdata))
     
     pred_matrix <- do.call(what = cbind, args = pred_vec_list)
     
