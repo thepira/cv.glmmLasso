@@ -88,44 +88,47 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
     modList <- vector(mode = 'list', length = length(lambdas))
     
     
-    controlList <- vector(mode = 'list', length = 2)
+    # Delta.start <- fit$Deltamatrix[fit$conv.step, ]
+    # Q.start <- fit$Q_long[[fit$conv.step + 1]]
+    # controlList <- list(start = Delta.start, 
+    #                     q_start = as.data.frame(Q.start))
+    
+    # controlList <- vector(mode = 'list', length = 2)
     # calling glmmLasso for each lambda value and after each fit, controlList
     # gets updated with the lastest model's coefficient to increase speed
+    
+    # fit first lambda
+    first_fit <- glmmLasso::glmmLasso(fix = fix,
+                                rnd = rnd,
+                                data = data,
+                                family = family,
+                                lambda = lambdas[1],
+                                ...)
+    # builing the first Delta.start, transpose required to make dimension
+    # correct for rbind later on.
+    # 
+    Delta.start <- first_fit$Deltamatrix[first_fit$conv.step, ] %>% t()
+    Q.start <- first_fit$Q_long[[first_fit$conv.step + 1]]
+    # controlList <- list(start = Delta.start, 
+                        # q_start = as.data.frame(Q.start))
+    
     for (l in seq_along(lambdas))
     {
+        message(sprintf('Lambda: %s\n ', lambdas[l]))
+        fit <- glmmLasso::glmmLasso(fix = fix,
+                                    rnd = rnd,
+                                    data = data,
+                                    family = family,
+                                    lambda = lambdas[l],
+                                    control = list(start=Delta.start[l,],q_start=Q.start[l]),
+                                    ...)
         
-        if(l == 1)
-        {
-            message(sprintf('Lambda: %s\n', lambdas[l]))
-            fit <- glmmLasso::glmmLasso(fix = fix,
-                                        rnd = rnd,
-                                        data = data,
-                                        family = family,
-                                        lambda = lambdas[l],
-                                        ...)
-            modList[[l]] <- fit
-            Delta.start <- fit$Deltamatrix[fit$conv.step, ]
-            Q.start <- fit$Q_long[[fit$conv.step + 1]]
-            controlList <- list(start = Delta.start, 
-                                q_start = as.data.frame(Q.start))
-        }
-        if(l != 1)
-        {
-            message(sprintf('Lambda: %s\n', lambdas[l]))
-            fit <- glmmLasso::glmmLasso(fix = fix,
-                                        rnd = rnd,
-                                        data = data,
-                                        family = family,
-                                        lambda = lambdas[l],
-                                        control = controlList,
-                                        ...)
-            
-            modList[[l]] <- fit
-            Delta.start <- rbind(Delta.start, fit$Deltamatrix[fit$conv.step, ])
-            Q.start <- c(Q.start, fit$Q_long[[fit$conv.step + 1]])
-            controlList <- list(start = Delta.start, 
-                                q_start = as.data.frame(Q.start))
-        }
+        
+        modList[[l]] <- fit
+        
+        Delta.start <- rbind(Delta.start, fit$Deltamatrix[fit$conv.step, ])
+        Q.start <- c(Q.start, fit$Q_long[[fit$conv.step + 1]])
+        
         
     }
     

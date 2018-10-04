@@ -28,7 +28,8 @@ modList1 <- glmmLasso_MultLambdas(fix = fix,
                       rnd = rnd,
                       data = data %>% dplyr::slice(trainIndices))
 
-modList1[100]
+modList1[95]
+modList1[1]
 
 
 mod1 <- glmmLasso::glmmLasso(fix = fix,
@@ -37,13 +38,23 @@ mod1 <- glmmLasso::glmmLasso(fix = fix,
                     family = gaussian(link = "identity"),
                     lambda = exp(8.1))
 
+# comparing models from glmmLasso_MultLambdas and manual fitting 
+
 theLambds <- buildLambdas(fix = fix, rnd = rnd, data = data %>% slice(trainIndices))
-mod2 <- glmmLasso::glmmLasso(fix = fix,
+
+mod1 <- glmmLasso::glmmLasso(fix = fix,
                     rnd = rnd,
                     data = data %>% slice(trainIndices),
                     family = gaussian(link = "identity"),
                     lambda = theLambds[1])
-mod2
+
+mod100 <- glmmLasso::glmmLasso(fix = fix,
+                    rnd = rnd,
+                    data = data %>% slice(trainIndices),
+                    family = gaussian(link = "identity"),
+                    lambda = theLambds[100])
+
+
 
 computeLambdaMax(fix = fix,
                  rnd = rnd,
@@ -89,3 +100,15 @@ predictionMatrix <- predict.glmmLasso_MultLambdas(modList1,
     newdata = data %>% dplyr::slice(testIndices))
 
 calc_mse(actual = data %>% dplyr::slice(testIndices) %>% pull(points), predicted = predictionMatrix)
+modList1[92]
+
+devtools::load_all()
+
+cv.glmmLasso(fix = fix, 
+             rnd = rnd,
+             data = data)
+
+for(l in seq_along(list(1,2,3,4,5)))
+{
+    l
+}

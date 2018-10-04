@@ -2,7 +2,7 @@
 
 # switch allows us to do take the family arg as assign the appropriate loss function 
 cv.glmmLasso <- function(fix, rnd, data, family= gaussian(link = "identity"), 
-                         kfold, lambdas = NULL, nlambdas = 100, 
+                         kfold = 5, lambdas = NULL, nlambdas = 100, 
                          lambda.min.ratio = ifelse(nobs < nvars, 0.01, 0.0001), 
                          loss=switch(family()$family, 
                                      'gaussian' = calc_mse,
@@ -17,6 +17,10 @@ cv.glmmLasso <- function(fix, rnd, data, family= gaussian(link = "identity"),
     # 
     # building randomIndices to cut up data for cross-validation
     
+    x <- useful::build.x(fix, data)
+    nobs <- nrow(x)
+    nvars <- ncol(x)
+    
     # if lambda isn't specified by user, build the lambdas vector, this is static for all k folds
     if (is.null(lambdas))
     {
@@ -29,33 +33,34 @@ cv.glmmLasso <- function(fix, rnd, data, family= gaussian(link = "identity"),
     }
     
     nrow <- nrow(data)
-    randomIndices <- dplyr::sample(nrow)
+    #randomIndices <- dplyr::sample(nrow)
     
     # building data frame to map a specific row to kth group
     # column 1 is the row, column 2 is a randomly assigned group
     # number of groups is determined by kfold value  
     rowDF <- tibble::tibble(
         row = seq(nrow),
-        group = dplyr::sample(rep(seq(kfold), length.out=nrow), replace = FALSE)
+        group = sample(rep(seq(kfold), length.out=nrow), replace = FALSE)
     )
     
     # sorting by group 
     rowDF <- rowDF %>% dplyr::arrange(group)
     
     # storing number of groups = kfold -> can't we just use k fold?
-    numGroups <- unique(rowDF$group)
+    # numGroups <- unique(rowDF$group)
     
     #instantiating list of 
-    lossVecList <- vector(mode = 'list', length = numGroups)
-    modList_foldk <- vector(mode = 'list', length = numGroups)
+    lossVecList <- vector(mode = 'list', length = kfold)
+    modList_foldk <- vector(mode = 'list', length = kfold)
     
-    for(k in numGroups)
+    for(k in 1:length(kfold))
     {
         testIndices <- dplyr::filter(rowDF, .data$group == k) %>% dplyr::pull(row)
         trainIndices <- rowDF$row[-testIndices]
         
         # fitting model
         # modList_foldk is a glmmLasso_MultLambdas object, which is a list of glmmLasso objects
+        message(sprintf('Round: %s\n ', k))
         modList_foldk[[k]] <- glmmLasso_MultLambdas(fix = fix,
                                       rnd = rnd,
                                       data = data %>% dplyr::slice(trainIndices),
@@ -77,9 +82,9 @@ cv.glmmLasso <- function(fix, rnd, data, family= gaussian(link = "identity"),
         # using matrix form for easier error calculation in loss()
         # predictionMatrix <- purrr::map(.x = modList_foldk[k], .f = predict.glmmLasso_MultLambdas, 
         #                             newdata = data %>% dplyr::slice(testIndices))
-        #TODO: Start here!
+       
         predictionMatrix <- predict.glmmLasso_MultLambdas(
-            modList_foldk[[k]],
+            object = modList_foldk[[k]],
             newdata = data %>% dplyr::slice(testIndices)
         )
             
@@ -87,28 +92,28 @@ cv.glmmLasso <- function(fix, rnd, data, family= gaussian(link = "identity"),
         # using loss function, calculating a list of loss values for each vector of prediction
         # which comes from a glmmLasso model with a specific lambda 
         # storing loss values for each fold
-        lossVecList[k] <- loss(actual = actualDataVector, predicted = predictionMatrix)
+        
+        
+        lossVecList[[k]] <- loss(actual = actualDataVector, predicted = predictionMatrix)
         # each element of this list should be 1 x nlambda
     }
-    
+
     #building matrix (k by nlambda) to help calculate cross-validated mean error
     cvLossMatrix <- do.call(what = rbind, args = lossVecList)
+
     cvm = colMeans(cvLossMatrix)
-    
+
     # calculating sd, cv, up, down
     cvsd <- apply(cvLossMatrix, 1, sd, na.rm = TRUE)
     cvup <- cvm + cvsd
     cvlo <- cvm - cvsd
-    
-    glmmLasso.fit <- glmmLasso::glmmLasso(fix = fix,
-                                          rnd = rnd,
-                                          data = data,
-                                          family = family,
-                                          lambdas = lambdas,
-                                          lambda.min.ratio = lambda.min.ratio,
-                                          ...)
-    
-    
+
+    glmmLasso.final <- glmmLasso_MultLambdas(fix = fix,
+                                             rnd = rnd,
+                                             data = data,
+                                             family = family)
+
+
     nzero <- #?? which fold is this?? take a look at each glmmLasso objects for each lambda, count non-zero coef
     
     

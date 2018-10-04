@@ -1,6 +1,17 @@
 # this function compute the max lambda based on formula given
 
-
+#' @title computeLambdaMax
+#' @description 
+#' @details 
+#' @author 
+#' @export
+#' @param fix
+#' @param rnd
+#' @param data
+#' @param scale
+#' @return 
+#' @examples 
+#' 
 computeLambdaMax <- function(fix, rnd, data, scale=TRUE)
 {
     # converting formula into matrices to do lambdaMax calculation
@@ -12,6 +23,7 @@ computeLambdaMax <- function(fix, rnd, data, scale=TRUE)
         x <- scale(x)
     }
     
+    # exp because of log scale
     # N*alpha*lambdaMax = max_l(<x_l, y>)
     lambdaMax <- exp(max(abs(colSums(x*y)), na.rm=TRUE) / nrow(data))
     
