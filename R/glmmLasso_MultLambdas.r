@@ -115,24 +115,35 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
     for (l in seq_along(lambdas))
     {
         message(sprintf('Lambda: %s\n ', lambdas[l]))
+        set.seed(1)
         fit <- glmmLasso::glmmLasso(fix = fix,
                                     rnd = rnd,
                                     data = data,
                                     family = family,
                                     lambda = lambdas[l],
-                                    control = list(start=Delta.start[l,],q_start=Q.start[l]),
-                                    ...)
+                                    control = list(start=Delta.start[l,],
+                                                   q_start=Q.start[l]),...)
         
+        # storing model objects before storing to modList
+        fit$lambda <- lambdas[l]
+        fit$Delta.start <- Delta.start[l,]
+        fit$Q.start <- Q.start[l]
+        fit$data <- data
+        fit$rnd <- rnd
+        fit$fix <- fix
+        fit$family <- family
         
         modList[[l]] <- fit
-        
         Delta.start <- rbind(Delta.start, fit$Deltamatrix[fit$conv.step, ])
         Q.start <- c(Q.start, fit$Q_long[[fit$conv.step + 1]])
         
+     
         
     }
     
     # the function returns a list of glmmLasso models 
+    
+    attr(modList, 'lambdas') <- lambdas
     
     class(modList) <- 'glmmLasso_MultLambdas'
     
@@ -147,7 +158,9 @@ predict.glmmLasso_MultLambdas <- function(object, newdata, ...)
     # pred_vec_list <- vector(mode = 'list', length = length(object))
     # storing returned vectors in a list 
     
-    pred_vec_list <- purrr::map(.x = object, .f = predict, newdata = as.data.frame(newdata))
+    pred_vec_list <- purrr::map(.x = object, .f = glmmLasso:::predict.glmmLasso, 
+                                # newdata = as.data.frame(newdata))
+                                newdata = newdata)
     
     pred_matrix <- do.call(what = cbind, args = pred_vec_list)
     

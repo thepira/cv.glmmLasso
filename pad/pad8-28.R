@@ -10,11 +10,12 @@ tib <- dplyr::tibble(row = seq(nrow(soccer)),
 testIndices <- tib %>% filter(.data$group == 1) %>% pull(row)
 trainIndices <- tib$row[-testIndices]
 
+trainingData <- data %>% dplyr::slice(trainIndices)
+
 fix <- points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles 
 + ave.attend + sold.out
 
 rnd <- list(team= ~ 1)
-
 response_var <- fix[[2]] %>% as.character()
 
 
@@ -26,17 +27,50 @@ devtools::load_all()
 
 modList1 <- glmmLasso_MultLambdas(fix = fix, 
                       rnd = rnd,
-                      data = data %>% dplyr::slice(trainIndices))
+                      data = trainingData,
+                      family = gaussian(link = "identity"))
 
-modList1[95]
+modList1 <- glmmLasso_MultLambdas(fix = fix, 
+                      rnd = rnd,
+                      data = data %>% dplyr::slice(trainIndices),
+                      lambdas = theLambds,
+                      family = gaussian(link = "identity"))
+
+modList1$lambdas == theLambds
+
+l <- modList1[[100]]$lambda 
+d <- modList1[[100]]$Delta.start
+q <- modList1[[100]]$Q.start
+da <- modList1[[100]]$data
+r <- modList1[[100]]$rnd
+f <- modList1[[100]]$fix
+fa <- modList1[[100]]$family
+
+
+
+
 modList1[1]
 
+modList1[[100]]
+mod100 <- glmmLasso::glmmLasso(fix = f,
+                    rnd = r,
+                    data = da,
+                    family = fa,
+                    lambda = l, 
+                    control = list(start = d, q.start = q))
 
-mod1 <- glmmLasso::glmmLasso(fix = fix,
+mod100_1 <- glmmLasso::glmmLasso(fix = fix,
                     rnd = rnd,
                     data = data %>% slice(trainIndices),
                     family = gaussian(link = "identity"),
-                    lambda = exp(8.1))
+                    lambda = l, 
+                    control = list(start = d, q.start = q))
+mod100_2 <- glmmLasso::glmmLasso(fix = fix,
+                    rnd = rnd,
+                    data = data %>% slice(trainIndices),
+                    family = gaussian(link = "identity"),
+                    lambda = l, 
+                    control = list(start = d, q.start = q))
 
 # comparing models from glmmLasso_MultLambdas and manual fitting 
 
@@ -104,7 +138,7 @@ modList1[92]
 
 devtools::load_all()
 
-cv.glmmLasso(fix = fix, 
+cv1 <- cv.glmmLasso(fix = fix, 
              rnd = rnd,
              data = data)
 
@@ -112,3 +146,9 @@ for(l in seq_along(list(1,2,3,4,5)))
 {
     l
 }
+
+temp <- cv1$cvup - cv1$cvm[100]
+
+max(cv1$cvm[cv1$cvm <= cv1$cvup[100]])
+
+temp

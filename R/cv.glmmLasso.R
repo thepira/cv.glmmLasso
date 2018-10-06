@@ -1,22 +1,29 @@
 
 
 # switch allows us to do take the family arg as assign the appropriate loss function 
-cv.glmmLasso <- function(fix, rnd, data, family= gaussian(link = "identity"), 
+cv.glmmLasso <- function(fix, rnd, data, family=gaussian(link = "identity"), 
                          kfold = 5, lambdas = NULL, nlambdas = 100, 
                          lambda.min.ratio = ifelse(nobs < nvars, 0.01, 0.0001), 
-                         loss=switch(family()$family, 
-                                     'gaussian' = calc_mse,
-                                     'binomial' = calc_logloss,
-                                     'multinomial' = calc_multilogloss,
-                                     'poisson' = calc_deviance),
+                         loss,
+                         lambda.final=c('lambda.1se', 'lambda.min'),
                          ...)
 {
-    # TODO: need to rewrite this with rsample
+    lambda.final <- match.arg(lambda.final)
+    
+    if(missing(loss))
+    {
+        loss <- switch(family$family, 
+               'gaussian' = calc_mse,
+               'binomial' = calc_logloss,
+               'multinomial' = calc_multilogloss,
+               'poisson' = calc_deviance)
+    }
+    # TODO: need to rewrite this with rsample ?
     # TODO: write documentation for all the functions
     # TODO: think about fitting lambda to the entire dataset + and then -> check glmnet documentations 
     # 
     # building randomIndices to cut up data for cross-validation
-    
+    # nobs <- nrow(data)
     x <- useful::build.x(fix, data)
     nobs <- nrow(x)
     nvars <- ncol(x)
@@ -32,15 +39,15 @@ cv.glmmLasso <- function(fix, rnd, data, family= gaussian(link = "identity"),
                                 lambda.min.ratio= lambda.min.ratio)   
     }
     
-    nrow <- nrow(data)
+    
     #randomIndices <- dplyr::sample(nrow)
     
     # building data frame to map a specific row to kth group
     # column 1 is the row, column 2 is a randomly assigned group
     # number of groups is determined by kfold value  
     rowDF <- tibble::tibble(
-        row = seq(nrow),
-        group = sample(rep(seq(kfold), length.out=nrow), replace = FALSE)
+        row = seq(nobs),
+        group = sample(rep(seq(kfold), length.out=nobs), replace = FALSE)
     )
     
     # sorting by group 
@@ -53,7 +60,7 @@ cv.glmmLasso <- function(fix, rnd, data, family= gaussian(link = "identity"),
     lossVecList <- vector(mode = 'list', length = kfold)
     modList_foldk <- vector(mode = 'list', length = kfold)
     
-    for(k in 1:length(kfold))
+    for(k in 1:kfold)
     {
         testIndices <- dplyr::filter(rowDF, .data$group == k) %>% dplyr::pull(row)
         trainIndices <- rowDF$row[-testIndices]
@@ -76,7 +83,8 @@ cv.glmmLasso <- function(fix, rnd, data, family= gaussian(link = "identity"),
         response_var <- fix[[2]] %>% as.character()
         
         # pulling out actual data
-        actualDataVector <- data %>% dplyr::slice(testIndices) %>% dplyr::pull(response_var)
+        actualDataVector <- data %>% dplyr::slice(testIndices) %>% 
+            dplyr::pull(response_var)
        
         # predicting values for each of the glmmLasso model (100 lambda) 
         # using matrix form for easier error calculation in loss()
@@ -93,7 +101,7 @@ cv.glmmLasso <- function(fix, rnd, data, family= gaussian(link = "identity"),
         # which comes from a glmmLasso model with a specific lambda 
         # storing loss values for each fold
         
-        
+        # TODO: think an error is thrown here 
         lossVecList[[k]] <- loss(actual = actualDataVector, predicted = predictionMatrix)
         # each element of this list should be 1 x nlambda
     }
@@ -108,43 +116,45 @@ cv.glmmLasso <- function(fix, rnd, data, family= gaussian(link = "identity"),
     cvup <- cvm + cvsd
     cvlo <- cvm - cvsd
 
-    glmmLasso.final <- glmmLasso_MultLambdas(fix = fix,
-                                             rnd = rnd,
-                                             data = data,
-                                             family = family)
 
-
-    nzero <- #?? which fold is this?? take a look at each glmmLasso objects for each lambda, count non-zero coef
+    #nzero <- #?? which fold is this?? take a look at each glmmLasso objects for each lambda, count non-zero coef
     
-    
+    # myMinIndex <- which.min(cvob1$cvm)
     minIndex <- which.min(cvm)    
     lambda.min <- lambdas[minIndex]
+    my1seIndex <- min(which(cvm <= cvup[minIndex]))
+    lambda.1se <- lambdas[my1seIndex]
     
-    # figuring out the OneSEIndex with do-while style loop
-    OneSEIndex <- minIndex
-    repeat
+    # commeting out for now, cuz we didn't re-fit ALL the lambda on full data set again
+    # nzero <- modList1 %>% purrr::map_dbl(~ max(sum(.x$coefficients != 0) - 1, 0))    
+    
+    chosenLambda <- if(lambda.final == 'lambda.1se')
     {
-        if(cvup < cvm[OneSEIndex])
-        {break}
-        OneSEIndex <- OneSEIndex + 1
+        lambda.1se
+    }else if(lambda.final == 'lambda.min')
+    {
+        lambda.min
     }
     
-    lambda.1se <- lambdas[OneSEIndex]
-        
-    
+    glmmLasso.final <- glmmLasso::glmmLasso(fix = fix,
+                                            rnd = rnd,
+                                            data = data,
+                                            family = family,
+                                            lambda = chosenLambda)
+    # add control list to this to make converge faster form one that create lambda.1se
     
     
     # mimicking cv.glmnet return objects
-    return(list(lambdas,
-                cvm,
-                cvsd,
-                cvup,
-                cvlo,
-                nzero,
-                glmmLasso.fit,
-                lambda.min,
-                lambda.1se,
-                LossMean=mean(foldLoss),
-                LossSD=sd(foldLoss)))
+    return(list(lambdas=lambdas,
+                cvm=cvm,
+                cvsd=cvsd,
+                cvup=cvup,
+                cvlo=cvlo,
+                # nzero,
+                glmmLasso.final=glmmLasso.final,
+                lambda.min=lambda.min,
+                lambda.1se=lambda.1se))
+                #LossMean=mean(foldLoss),
+                #LossSD=sd(foldLoss)))
     
 }
