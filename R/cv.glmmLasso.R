@@ -6,28 +6,23 @@
 #' @param fix A two-sided linear formula object describing the fixed-effects part of the model, with the response on the left of a ~ operator and the terms, separated by + operators, on the right. For categorical covariables use as.factor(.) in the formula. Note, that the corresponding dummies are treated as a group and are updated blockwise
 #' @param rnd A two-sided linear formula object describing the random-effects part of the model, with the grouping factor on the left of a ~ operator and the random terms, separated by + operators, on the right; aternatively, the random effects design matrix can be given directly (with suitable column names). If set to NULL, no random effects are included.
 #' @param data The data frame containing the variables named in formula.
-#' @param family a GLM family, see glm and family. Also ordinal response models can be fitted: use family=acat() and family=cumulative() for the fitting of an adjacent category or cumulative model, respectively. If family is missing then a linear mixed model is fit; otherwise a generalized linear mixed model is fit.
-
+#' @param family A GLM family, see [glm()] and [family()]. Also ordinal response models can be fitted: use family=acat() and family=cumulative() for the fitting of an adjacent category or cumulative model, respectively. If family is missing then a linear mixed model is fit; otherwise a generalized linear mixed model is fit.
 #' @param kfolds
 #' @param lambdas Optional user-supplied lambda sequence; default is NULL, and glmmLasso_MultLambdas chooses its own sequence
-#' @param nlambda the number of lambdas values, default value is 100 if lambdas is not user-supplied
+#' @param nlambda The number of lambdas values, default value is 100 if lambdas is not user-supplied
 #' @param lambda.min.ratio Smallest value for lambda, as a fraction of lambda.max, the (data derived) entry value (i.e. the smallest value for which all coefficients are zero). The default depends on the sample size nobs relative to the number of variables nvars. If nobs > nvars, the default is 0.0001, close to zero. If nobs < nvars, the default is 0.01.
-#' @param loss loss function used to calculate error, default values is based on family - 'gaussian' = calc_mse, 'binomial' = calc_logloss, 'multinomial' = calc_multilogloss, 'poisson' = calc_deviance
-#' @param lambda.final choice for final model to use lambda.1se or lambda.min, default is lambda.1se
-#' 
-#' @return a list of cross validation values including lambdas, cvm, cvsd, cvup, cvlo, glmmLasso.final, =lambda.min, lambda.1se
+#' @param loss Loss function used to calculate error, default values is based on family - 'gaussian' = calc_mse, 'binomial' = calc_logloss, 'multinomial' = calc_multilogloss, 'poisson' = calc_deviance
+#' @param lambda.final Choice for final model to use lambda.1se or lambda.min, default is lambda.1se
+#' @md
+#' @return A list of cross-validation values including lambdas, cvm, cvsd, cvup, cvlo, glmmLasso.final, lambda.min, lambda.1se
 #' 
 #' @examples 
 #' data("soccer", package = "glmmLasso")
-#'soccer[,c(4,5,9:16)]<-scale(soccer[,c(4,5,9:16)],center=TRUE,scale=TRUE)
-#'soccer<-data.frame(soccer)
-#'fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out
-#'rnd = list(team=~1)
-#'cv.glmmLasso(fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out, rnd = list(team=~1), data = soccer, family= gaussian(link = "identity"), kfold = 5, lambda.final= 'lambda.1se')
-
-
-
-# switch allows us to do take the family arg as assign the appropriate loss function 
+#' soccer[,c(4,5,9:16)]<-scale(soccer[,c(4,5,9:16)],center=TRUE,scale=TRUE)
+#' soccer<-data.frame(soccer)
+#' fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out
+#' rnd = list(team=~1)
+#' cv.glmmLasso(fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out, rnd = list(team=~1), data = soccer, family= gaussian(link = "identity"), kfold = 5, lambda.final= 'lambda.1se')
 # 
 cv.glmmLasso <- function(fix, rnd, data, family=gaussian(link = "identity"), 
                          kfold = 5, lambdas = NULL, nlambdas = 100, 
@@ -40,11 +35,12 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian(link = "identity"),
     
     if(missing(loss))
     {
-        loss <- switch(family$family, 
-               'gaussian' = calc_mse,
-               'binomial' = calc_logloss,
-               'multinomial' = calc_multilogloss,
-               'poisson' = calc_deviance)
+      # switch allows us to do take the family arg as assign the appropriate loss function 
+      loss <- switch(family$family, 
+                     'gaussian' = calc_mse,
+                     'binomial' = calc_logloss,
+                     'multinomial' = calc_multilogloss,
+                     'poisson' = calc_deviance)
     }
 
     x <- useful::build.x(fix, data)
@@ -134,19 +130,17 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian(link = "identity"),
     cvm = colMeans(cvLossMatrix)
 
     # calculating sd, cv, up, down
-    cvsd <- apply(cvLossMatrix, 1, sd, na.rm = TRUE)
+    cvsd <- apply(cvLossMatrix, 2, sd, na.rm = TRUE)
     cvup <- cvm + cvsd
     cvlo <- cvm - cvsd
 
-
-    
-
+    # TODO: comment this better
     minIndex <- which.min(cvm)    
     lambda.min <- lambdas[minIndex]
     my1seIndex <- min(which(cvm <= cvup[minIndex]))
     lambda.1se <- lambdas[my1seIndex]
     
-  
+    # TODO: comment this better
     chosenLambda <- if(lambda.final == 'lambda.1se')
     {
         lambda.1se
@@ -161,6 +155,7 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian(link = "identity"),
                                             family = family,
                                             lambda = chosenLambda)
     # add control list to this to make converge faster form one that create lambda.1se
+    # TODO: (maybe) For final model fit, supply control list from the model that led to either lambda.1se or lambda.min
     
     
     # mimicking cv.glmnet return objects
