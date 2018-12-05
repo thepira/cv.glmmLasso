@@ -3,11 +3,12 @@ Title: Cross-validation for multi-level lasso
 Version: 0.0.0.9000
 Authors@R: c(person('Pirapong', 'Jitngamplang', email = 'pira.package@gmail.com', role = c('aut')), person('Jared', 'Lander', email = 'package@jaredlander.com', role = c('cre')))
 Description: This performs cross-validation for multi-level lasso using glmmLasso.
-Depends: R (>= 3.4.3)
+Depends: R
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 BugReports: https://github.com/thepira/cv.glmmLasso/issues
-Imports: glmmLasso
+Imports: glmmLasso,
+    tibble
 Suggests: testthat
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0

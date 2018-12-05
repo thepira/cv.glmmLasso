@@ -141,7 +141,7 @@ predict.glmmLasso_MultLambdas <- function(object, newdata, ...)
     # pred_vec_list <- vector(mode = 'list', length = length(object))
     # storing returned vectors in a list 
     
-    pred_vec_list <- purrr::map(.x = object, .f = glmmLasso:::predict.glmmLasso, 
+    pred_vec_list <- purrr::map(.x = object, .f = predict, 
                                 # newdata = as.data.frame(newdata))
                                 newdata = newdata)
     

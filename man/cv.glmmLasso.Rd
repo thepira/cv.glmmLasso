@@ -16,20 +16,20 @@ cv.glmmLasso(fix, rnd, data, family = gaussian(link = "identity"),
 
 \item{data}{The data frame containing the variables named in formula.}
 
-\item{family}{a GLM family, see glm and family. Also ordinal response models can be fitted: use family=acat() and family=cumulative() for the fitting of an adjacent category or cumulative model, respectively. If family is missing then a linear mixed model is fit; otherwise a generalized linear mixed model is fit.}
+\item{family}{A GLM family, see \code{\link[=glm]{glm()}} and \code{\link[=family]{family()}}. Also ordinal response models can be fitted: use family=acat() and family=cumulative() for the fitting of an adjacent category or cumulative model, respectively. If family is missing then a linear mixed model is fit; otherwise a generalized linear mixed model is fit.}
 
 \item{lambdas}{Optional user-supplied lambda sequence; default is NULL, and glmmLasso_MultLambdas chooses its own sequence}
 
 \item{lambda.min.ratio}{Smallest value for lambda, as a fraction of lambda.max, the (data derived) entry value (i.e. the smallest value for which all coefficients are zero). The default depends on the sample size nobs relative to the number of variables nvars. If nobs > nvars, the default is 0.0001, close to zero. If nobs < nvars, the default is 0.01.}
 
-\item{loss}{loss function used to calculate error, default values is based on family - 'gaussian' = calc_mse, 'binomial' = calc_logloss, 'multinomial' = calc_multilogloss, 'poisson' = calc_deviance}
+\item{loss}{Loss function used to calculate error, default values is based on family - 'gaussian' = calc_mse, 'binomial' = calc_logloss, 'multinomial' = calc_multilogloss, 'poisson' = calc_deviance}
 
-\item{lambda.final}{choice for final model to use lambda.1se or lambda.min, default is lambda.1se}
+\item{lambda.final}{Choice for final model to use lambda.1se or lambda.min, default is lambda.1se}
 
-\item{nlambda}{the number of lambdas values, default value is 100 if lambdas is not user-supplied}
+\item{nlambda}{The number of lambdas values, default value is 100 if lambdas is not user-supplied}
 }
 \value{
-a list of cross validation values including lambdas, cvm, cvsd, cvup, cvlo, glmmLasso.final, =lambda.min, lambda.1se
+A list of cross-validation values including lambdas, cvm, cvsd, cvup, cvlo, glmmLasso.final, lambda.min, lambda.1se
 }
 \description{
 Does k-fold cross validation for glmmLasso
