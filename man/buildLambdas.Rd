@@ -4,8 +4,8 @@
 \alias{buildLambdas}
 \title{buildLambdas}
 \usage{
-buildLambdas(fix, rnd, data, nlambdas = 100,
-  lambda.min.ratio = ifelse(nobs < nvars, 0.01, 1e-04))
+buildLambdas(fix, rnd, data, nlambdas = 100, lambda.min.ratio = ifelse(nobs
+  < nvars, 0.01, 1e-04))
 }
 \arguments{
 \item{fix}{A two-sided linear formula object describing the fixed-effects part of the model, with the response on the left of a ~ operator and the terms, separated by + operators, on the right. For categorical covariables use as.factor(.) in the formula. Note, that the corresponding dummies are treated as a group and are updated blockwise}

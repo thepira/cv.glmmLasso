@@ -14,8 +14,6 @@
 #' @return Returns a glmmLasso_MultLambdas object, whcih is list glmmLasso models for each lambda value.  
 #' @examples
 #' 
-#' linear mixed model with slope on ave.attend
-#' 
 #' library(glmmLasso)
 #' data("soccer")
 #' glmmLasso_MultLambdas(fix = points ~ transfer.spendings ball.possession + ave.attend, rnd = list(team =~ 1 + ave.attend), data = soccer, family = poisson(link = log), lambda = seq(from = 500, to = 1, by = -5))
@@ -64,18 +62,12 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
     # Passing the set of estimates from the last iteration as the 
     # 'start' parameter of the controlList
     
-    # Delta.start <- mod1$Deltamatrix[mod1$conv.step, ]
-    # 
-    # # Q_long is a list containing the estimates of the random effects 
-    # # variance-covariance parameters for each iteration of the main algorithm.
-    # # Passing the variance-covaiance matrix as the q_start parameter of
-    # # the controlList 
-    # 
-    # Q.start <- mod1$Q_long[[mod1$conv.step + 1]]
-    # 
-    # # building the controlList as the first starting control parameter for loop
-    # controlList <- list(start = Delta.start, 
-    #                     q_start = as.data.frame(Q.start))
+    # Q_long is a list containing the estimates of the random effects
+    # variance-covariance parameters for each iteration of the main algorithm.
+    # Passing the variance-covaiance matrix as the q_start parameter of
+    # the controlList
+    
+
    
     # initializing list of object to hold the model outputs 
     modList <- vector(mode = 'list', length = length(lambdas))
@@ -92,13 +84,13 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
     
     Delta.start <- first_fit$Deltamatrix[first_fit$conv.step, ] %>% t()
     Q.start <- first_fit$Q_long[[first_fit$conv.step + 1]]
-    # controlList <- list(start = Delta.start, 
-                        # q_start = as.data.frame(Q.start))
     
     for (l in seq_along(lambdas))
     {
+        
+        # for showing lambda at each iteration
         # message(sprintf('Lambda: %s\n ', lambdas[l]))
-        # set.seed(1)
+        
         fit <- glmmLasso::glmmLasso(fix = fix,
                                     rnd = rnd,
                                     data = data,
@@ -142,7 +134,6 @@ predict.glmmLasso_MultLambdas <- function(object, newdata, ...)
     # storing returned vectors in a list 
     
     pred_vec_list <- purrr::map(.x = object, .f = predict, 
-                                # newdata = as.data.frame(newdata))
                                 newdata = newdata)
     
     pred_matrix <- do.call(what = cbind, args = pred_vec_list)

@@ -4,9 +4,9 @@
 \alias{glmmLasso_MultLambdas}
 \title{glmmLasso_MultLambdas}
 \usage{
-glmmLasso_MultLambdas(fix, rnd, data, family = gaussian(link =
-  "identity"), lambdas = NULL, nlambdas = 100,
-  lambda.min.ratio = ifelse(nobs < nvars, 0.01, 1e-04), ...)
+glmmLasso_MultLambdas(fix, rnd, data, family = gaussian(link = "identity"),
+  lambdas = NULL, nlambdas = 100, lambda.min.ratio = ifelse(nobs < nvars,
+  0.01, 1e-04), ...)
 }
 \arguments{
 \item{fix}{A two-sided linear formula object describing the fixed-effects part of the model, with the response on the left of a ~ operator and the terms, separated by + operators, on the right. For categorical covariables use as.factor(.) in the formula. Note, that the corresponding dummies are treated as a group and are updated blockwise}
@@ -33,8 +33,6 @@ Variable selection using glmmLasso for multiple lambdas values
 Build multiple models given a sequence of lambda values
 }
 \examples{
-
-linear mixed model with slope on ave.attend
 
 library(glmmLasso)
 data("soccer")

@@ -9,6 +9,11 @@ Encoding: UTF-8
 LazyData: true
 BugReports: https://github.com/thepira/cv.glmmLasso/issues
 Imports: glmmLasso,
-    tibble
+    tibble,
+    MLmetrics,
+    dismo,
+    dplyr,
+    purrr,
+    useful
 Suggests: testthat
 RoxygenNote: 6.1.0
