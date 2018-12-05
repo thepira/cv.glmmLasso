@@ -16,7 +16,11 @@
 #' 
 #' library(glmmLasso)
 #' data("soccer")
-#' glmmLasso_MultLambdas(fix = points ~ transfer.spendings ball.possession + ave.attend, rnd = list(team =~ 1 + ave.attend), data = soccer, family = poisson(link = log), lambda = seq(from = 500, to = 1, by = -5))
+#' 
+#' mod1 <- glmmLasso_MultLambdas(fix = points ~ transfer.spendings + 
+#' ball.possession + ave.attend, rnd = list(team =~ 1 + ave.attend), 
+#' data = soccer, family = poisson(link = log), 
+#' lambda = seq(from = 500, to = 1, by = -5))
 #' 
 #'  
 
@@ -42,7 +46,7 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
     
     if (is.null(lambdas))
     {
-
+        
         # building the lambda vector
         lambdas <- buildLambdas(fix = fix,
                                 rnd = rnd,
@@ -51,7 +55,7 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
                                 lambda.min.ratio = lambda.min.ratio)    
     }
     
-   
+    
     
     # passing Q.start and Delta.start is modeled from glmmLasso demo file
     # from the "More Elegant section" 
@@ -67,19 +71,19 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
     # Passing the variance-covaiance matrix as the q_start parameter of
     # the controlList
     
-
-   
+    
+    
     # initializing list of object to hold the model outputs 
     modList <- vector(mode = 'list', length = length(lambdas))
     
     
     # fit first lambda
     first_fit <- glmmLasso::glmmLasso(fix = fix,
-                                rnd = rnd,
-                                data = data,
-                                family = family,
-                                lambda = lambdas[1],
-                                ...)
+                                      rnd = rnd,
+                                      data = data,
+                                      family = family,
+                                      lambda = lambdas[1],
+                                      ...)
     # builing the first Delta.start, transpose required to make dimension
     
     Delta.start <- first_fit$Deltamatrix[first_fit$conv.step, ] %>% t()
@@ -112,7 +116,7 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
         Delta.start <- rbind(Delta.start, fit$Deltamatrix[fit$conv.step, ])
         Q.start <- c(Q.start, fit$Q_long[[fit$conv.step + 1]])
         
-     
+        
         
     }
     

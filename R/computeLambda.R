@@ -13,6 +13,7 @@
 #' data("soccer", package = "glmmLasso") 
 #' soccer[,c(4,5,9:16)]<-scale(soccer[,c(4,5,9:16)],center=TRUE,scale=TRUE) 
 #' soccer<-data.frame(soccer) 
+#' 
 #' fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out 
 #' rnd = list(team=~1) 
 #' lambdaMax = computeLambdaMax(fix = fix, rnd = rnd, data = data) 

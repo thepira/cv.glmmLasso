@@ -36,7 +36,11 @@ Build multiple models given a sequence of lambda values
 
 library(glmmLasso)
 data("soccer")
-glmmLasso_MultLambdas(fix = points ~ transfer.spendings ball.possession + ave.attend, rnd = list(team =~ 1 + ave.attend), data = soccer, family = poisson(link = log), lambda = seq(from = 500, to = 1, by = -5))
+
+mod1 <- glmmLasso_MultLambdas(fix = points ~ transfer.spendings + 
+ball.possession + ave.attend, rnd = list(team =~ 1 + ave.attend), 
+data = soccer, family = poisson(link = log), 
+lambda = seq(from = 500, to = 1, by = -5))
 
  
 }
