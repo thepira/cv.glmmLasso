@@ -18,7 +18,11 @@ cv.glmmLasso(fix, rnd, data, family = gaussian(link = "identity"),
 
 \item{family}{A GLM family, see \code{\link[=glm]{glm()}} and \code{\link[=family]{family()}}. Also ordinal response models can be fitted: use family=acat() and family=cumulative() for the fitting of an adjacent category or cumulative model, respectively. If family is missing then a linear mixed model is fit; otherwise a generalized linear mixed model is fit.}
 
+\item{kfold}{Number of folds - default is 10. Although k-folds can be as large as the sample size (leave-one-out CV), it is not recommended for large datasets. Smallest value allowable is nfolds = 3}
+
 \item{lambdas}{Optional user-supplied lambda sequence; default is NULL, and glmmLasso_MultLambdas chooses its own sequence}
+
+\item{nlambdas}{The number of lambdas values, default value is 100 if lambdas is not user-supplied}
 
 \item{lambda.min.ratio}{Smallest value for lambda, as a fraction of lambda.max, the (data derived) entry value (i.e. the smallest value for which all coefficients are zero). The default depends on the sample size nobs relative to the number of variables nvars. If nobs > nvars, the default is 0.0001, close to zero. If nobs < nvars, the default is 0.01.}
 
@@ -33,9 +37,7 @@ cv.glmmLasso(fix, rnd, data, family = gaussian(link = "identity"),
 
 \item{lambda.final}{Choice for final model to use lambda.1se or lambda.min, default is lambda.1se}
 
-\item{kfolds}{Number of folds - default is 10. Although k-folds can be as large as the sample size (leave-one-out CV), it is not recommended for large datasets. Smallest value allowable is nfolds = 3}
-
-\item{nlambda}{The number of lambdas values, default value is 100 if lambdas is not user-supplied}
+\item{...}{can receive parameters accepted by glmmLasso}
 }
 \value{
 A list of cross-validation values including: \cr
@@ -60,12 +62,11 @@ Build multiple models given a sequence of lambda values
 \examples{
 data("soccer", package = "glmmLasso")
 soccer[,c(4,5,9:16)]<-scale(soccer[,c(4,5,9:16)],center=TRUE,scale=TRUE)
-soccer<-data.frame(soccer)
+soccer <- data.frame(soccer)
 
 mod1 <- cv.glmmLasso(fix = points ~ transfer.spendings + ave.unfair.score + 
-ball.possession + tackles + ave.attend + sold.out, rnd = list(team=~1), 
-data = soccer, family = gaussian(link = "identity"), kfold = 5, 
-lambda.final = 'lambda.1se')
+ball.possession + tackles, rnd = list(team=~1), data = soccer, 
+family = gaussian(link = "identity"), kfold = 5, lambda.final = 'lambda.1se')
 }
 \author{
 Pirapong Jitngamplang, Jared Lander

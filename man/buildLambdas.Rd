@@ -15,6 +15,8 @@ buildLambdas(fix, rnd, data, nlambdas = 100, lambda.min.ratio = ifelse(nobs
 \item{data}{The data frame containing the variables named in formula.}
 
 \item{nlambdas}{the number of lambdas values, default value is 100 if lambdas is not user-supplied}
+
+\item{lambda.min.ratio}{Smallest value for lambda, as a fraction of lambda.max, the (data derived) entry value (i.e. the smallest value for which all coefficients are zero). The default depends on the sample size nobs relative to the number of variables nvars. If nobs > nvars, the default is 0.0001, close to zero. If nobs < nvars, the default is 0.01.}
 }
 \value{
 returns a vector of lambda

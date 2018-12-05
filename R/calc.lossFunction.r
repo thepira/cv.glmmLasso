@@ -61,6 +61,8 @@ calc_multilogloss <- function(actual, predicted)
 #' @author Pirapong Jitngamplang, Jared Lander
 #' @param actual actual data values 
 #' @param predicted predicted data values
+#' @param family default value is poisson
+#' @param ... can receive parameters accepted by dismo::calc.deviance
 #' @return error between actual versus prediction
 #'
 calc_deviance <- function(actual, predicted, family = 'poisson',...)

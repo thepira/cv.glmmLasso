@@ -8,9 +8,10 @@
 #' @param rnd A two-sided linear formula object describing the random-effects part of the model, with the grouping factor on the left of a ~ operator and the random terms, separated by + operators, on the right; aternatively, the random effects design matrix can be given directly (with suitable column names). If set to NULL, no random effects are included.
 #' @param data The data frame containing the variables named in formula.
 #' @param family a GLM family, see glm and family. Also ordinal response models can be fitted: use family=acat() and family=cumulative() for the fitting of an adjacent category or cumulative model, respectively. If family is missing then a linear mixed model is fit; otherwise a generalized linear mixed model is fit.
-#' @param lambda The penalty parameter that controls the shrinkage of fixed terms and controls the variable selection. The optimal penalty parameter is a tuning parameter of the procedure that has to be determined, e.g. by use of information criteria or cross validation. Should inputted as a numeric vector from high to low. (See details for an example.)
+#' @param lambdas The penalty parameter that controls the shrinkage of fixed terms and controls the variable selection. The optimal penalty parameter is a tuning parameter of the procedure that has to be determined, e.g. by use of information criteria or cross validation. Should inputted as a numeric vector from high to low. (See details for an example.)
 #' @param nlambdas the number of lambdas values, default value is 100.
 #' @param lambda.min.ratio Smallest value for lambda, as a fraction of lambda.max, the (data derived) entry value (i.e. the smallest value for which all coefficients are zero). The default depends on the sample size nobs relative to the number of variables nvars. If nobs > nvars, the default is 0.0001, close to zero. If nobs < nvars, the default is 0.01.
+#' @param ... can receive parameters accepted by glmmLasso
 #' @return Returns a glmmLasso_MultLambdas object, whcih is list glmmLasso models for each lambda value.  
 #' @examples
 #' 
@@ -18,7 +19,7 @@
 #' data("soccer")
 #' 
 #' mod1 <- glmmLasso_MultLambdas(fix = points ~ transfer.spendings + 
-#' ball.possession + ave.attend, rnd = list(team =~ 1 + ave.attend), 
+#' ball.possession + tackles , rnd = list(team =~ 1 + ave.attend), 
 #' data = soccer, family = poisson(link = log), 
 #' lambda = seq(from = 500, to = 1, by = -5))
 #' 
@@ -31,7 +32,7 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
                                   lambda.min.ratio=ifelse(nobs < nvars, 0.01, 0.0001), 
                                   ...)
 {
-
+    
     # fitting first model to generate initial inputs for control parameter
     # here we use the first lambda (highest penalty) to start
     # based glmmLasso's author, glmmLasso is faster when final coefficient

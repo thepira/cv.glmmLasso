@@ -12,6 +12,8 @@ computeLambdaMax(fix, rnd, data, scale = TRUE)
 \item{rnd}{A two-sided linear formula object describing the random-effects part of the model, with the grouping factor on the left of a ~ operator and the random terms, separated by + operators, on the right; aternatively, the random effects design matrix can be given directly (with suitable column names). If set to NULL, no random effects are included.}
 
 \item{data}{The data frame containing the variables named in formula.}
+
+\item{scale}{default value is true}
 }
 \value{
 returns the lambdaMax value based on given dataset
@@ -21,16 +23,6 @@ compute the maximum lambda value based on given dataset
 }
 \details{
 lambdaMax is computed based on  the coordinate descent algorithm from this paper: Friedman, Jerome, Trevor Hastie, and Rob Tibshirani. "Regularization paths for generalized linear models via coordinate descent."
-}
-\examples{
-data("soccer", package = "glmmLasso") 
-soccer[,c(4,5,9:16)]<-scale(soccer[,c(4,5,9:16)],center=TRUE,scale=TRUE) 
-soccer<-data.frame(soccer) 
-
-fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out 
-rnd = list(team=~1) 
-lambdaMax = computeLambdaMax(fix = fix, rnd = rnd, data = data) 
-
 }
 \author{
 Pirapong Jitngamplang, Jared Lander

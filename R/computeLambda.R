@@ -7,17 +7,9 @@
 #' @param fix A two-sided linear formula object describing the fixed-effects part of the model, with the response on the left of a ~ operator and the terms, separated by + operators, on the right. For categorical covariables use as.factor(.) in the formula. Note, that the corresponding dummies are treated as a group and are updated blockwise
 #' @param rnd A two-sided linear formula object describing the random-effects part of the model, with the grouping factor on the left of a ~ operator and the random terms, separated by + operators, on the right; aternatively, the random effects design matrix can be given directly (with suitable column names). If set to NULL, no random effects are included.
 #' @param data The data frame containing the variables named in formula.
-#' @param scale
+#' @param scale default value is true
 #' @return returns the lambdaMax value based on given dataset
-#' @examples 
-#' data("soccer", package = "glmmLasso") 
-#' soccer[,c(4,5,9:16)]<-scale(soccer[,c(4,5,9:16)],center=TRUE,scale=TRUE) 
-#' soccer<-data.frame(soccer) 
-#' 
-#' fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out 
-#' rnd = list(team=~1) 
-#' lambdaMax = computeLambdaMax(fix = fix, rnd = rnd, data = data) 
-#' 
+
 
 computeLambdaMax <- function(fix, rnd, data, scale=TRUE)
 {
@@ -46,6 +38,7 @@ computeLambdaMax <- function(fix, rnd, data, scale=TRUE)
 #' @param rnd A two-sided linear formula object describing the random-effects part of the model, with the grouping factor on the left of a ~ operator and the random terms, separated by + operators, on the right; aternatively, the random effects design matrix can be given directly (with suitable column names). If set to NULL, no random effects are included.
 #' @param data The data frame containing the variables named in formula.
 #' @param nlambdas the number of lambdas values, default value is 100 if lambdas is not user-supplied
+#' @param lambda.min.ratio Smallest value for lambda, as a fraction of lambda.max, the (data derived) entry value (i.e. the smallest value for which all coefficients are zero). The default depends on the sample size nobs relative to the number of variables nvars. If nobs > nvars, the default is 0.0001, close to zero. If nobs < nvars, the default is 0.01.
 #' @return returns a vector of lambda
 #'
 
