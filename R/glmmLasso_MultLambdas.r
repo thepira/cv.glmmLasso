@@ -53,16 +53,7 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
                                 lambda.min.ratio = lambda.min.ratio)    
     }
     
-    # TODO: take out the first model fit. 
-    # 
-    # mod1 <- glmmLasso::glmmLasso(fix = fix,
-    #                   rnd = rnd,
-    #                   data = data,
-    #                   family = family,
-    #                   lambda = lambdas[1],
-    #                   ...)
-    
-    # modList[[1]] <- mod1
+   
     
     # passing Q.start and Delta.start is modeled from glmmLasso demo file
     # from the "More Elegant section" 
@@ -90,15 +81,6 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
     modList <- vector(mode = 'list', length = length(lambdas))
     
     
-    # Delta.start <- fit$Deltamatrix[fit$conv.step, ]
-    # Q.start <- fit$Q_long[[fit$conv.step + 1]]
-    # controlList <- list(start = Delta.start, 
-    #                     q_start = as.data.frame(Q.start))
-    
-    # controlList <- vector(mode = 'list', length = 2)
-    # calling glmmLasso for each lambda value and after each fit, controlList
-    # gets updated with the lastest model's coefficient to increase speed
-    
     # fit first lambda
     first_fit <- glmmLasso::glmmLasso(fix = fix,
                                 rnd = rnd,
@@ -107,8 +89,7 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
                                 lambda = lambdas[1],
                                 ...)
     # builing the first Delta.start, transpose required to make dimension
-    # correct for rbind later on.
-    # 
+    
     Delta.start <- first_fit$Deltamatrix[first_fit$conv.step, ] %>% t()
     Q.start <- first_fit$Q_long[[first_fit$conv.step + 1]]
     # controlList <- list(start = Delta.start, 
