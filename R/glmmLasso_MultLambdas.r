@@ -9,7 +9,9 @@
 #' @param data The data frame containing the variables named in formula.
 #' @param family a GLM family, see glm and family. Also ordinal response models can be fitted: use family=acat() and family=cumulative() for the fitting of an adjacent category or cumulative model, respectively. If family is missing then a linear mixed model is fit; otherwise a generalized linear mixed model is fit.
 #' @param lambda The penalty parameter that controls the shrinkage of fixed terms and controls the variable selection. The optimal penalty parameter is a tuning parameter of the procedure that has to be determined, e.g. by use of information criteria or cross validation. Should inputted as a numeric vector from high to low. (See details for an example.)
-#' @return Returns a list glmmLasso models for each lambda value.  
+#' @param nlambdas the number of lambdas values, default value is 100.
+#' @param lambda.min.ratio Smallest value for lambda, as a fraction of lambda.max, the (data derived) entry value (i.e. the smallest value for which all coefficients are zero). The default depends on the sample size nobs relative to the number of variables nvars. If nobs > nvars, the default is 0.0001, close to zero. If nobs < nvars, the default is 0.01.
+#' @return Returns a glmmLasso_MultLambdas object, whcih is list glmmLasso models for each lambda value.  
 #' @examples
 #' 
 #' linear mixed model with slope on ave.attend

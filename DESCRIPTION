@@ -10,3 +10,4 @@ LazyData: true
 BugReports: https://github.com/thepira/cv.glmmLasso/issues
 Imports: glmmLasso
 Suggests: testthat
+RoxygenNote: 6.0.1
