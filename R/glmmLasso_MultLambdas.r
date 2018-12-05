@@ -97,8 +97,8 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
     
     for (l in seq_along(lambdas))
     {
-        message(sprintf('Lambda: %s\n ', lambdas[l]))
-        set.seed(1)
+        # message(sprintf('Lambda: %s\n ', lambdas[l]))
+        # set.seed(1)
         fit <- glmmLasso::glmmLasso(fix = fix,
                                     rnd = rnd,
                                     data = data,
