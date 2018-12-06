@@ -13,7 +13,7 @@ calc_deviance(actual, predicted, family = "poisson", ...)
 
 \item{family}{default value is poisson}
 
-\item{...}{can receive parameters accepted by dismo::calc.deviance}
+\item{\dots}{can receive parameters accepted by dismo::calc.deviance}
 }
 \value{
 error between actual versus prediction

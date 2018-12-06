@@ -2,3 +2,4 @@
 
 export(cv.glmmLasso)
 export(glmmLasso_MultLambdas)
+importFrom(dplyr,"%>%")

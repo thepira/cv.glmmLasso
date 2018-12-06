@@ -1,24 +1,20 @@
 context("MultipleLambdas")
 
-theLambdas <- seq(from = 500, to = 1, by = -5)
+
 mod_intercept_slope <- glmmLasso_MultLambdas(fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out, 
-                             rnd = list(team =~ 1 + ave.attend),
+                             rnd = list(team =~ 1),
                              data = soccer, 
-                             family = poisson(link = log), 
-                             lambda = theLambdas)
+                             family = poisson(link = log))
 
 mod_intercept <- glmmLasso_MultLambdas(fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out, 
                                              rnd = list(team =~ 1),
                                              data = soccer, 
-                                             family = poisson(link = log), 
-                                             lambda = theLambdas)
+                                             family = poisson(link = log))
 
 test_that("The proper class is returned", {
     expect_is(mod_intercept_slope, 'glmmLasso_MultLambdas')
-    expect_length(mod_intercept_slope, length(theLambdas))
     
     expect_is(mod_intercept, 'glmmLasso_MultLambdas')
-    expect_length(mod_intercept, length(theLambdas))
 })
 
 test_that('It does not have names', {

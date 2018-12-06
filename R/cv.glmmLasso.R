@@ -1,8 +1,11 @@
+if(getRversion() >= "2.15.1")  utils::globalVariables(c(".data"))
+
 #' @title cv.glmmLasso
 #' @description Does k-fold cross validation for glmmLasso  
 #' @details Build multiple models given a sequence of lambda values
 #' @author Pirapong Jitngamplang, Jared Lander
 #' @export
+#' @importFrom dplyr "%>%"
 #' @param fix A two-sided linear formula object describing the fixed-effects part of the model, with the response on the left of a ~ operator and the terms, separated by + operators, on the right. For categorical covariables use as.factor(.) in the formula. Note, that the corresponding dummies are treated as a group and are updated blockwise
 #' @param rnd A two-sided linear formula object describing the random-effects part of the model, with the grouping factor on the left of a ~ operator and the random terms, separated by + operators, on the right; aternatively, the random effects design matrix can be given directly (with suitable column names). If set to NULL, no random effects are included.
 #' @param data The data frame containing the variables named in formula.
@@ -21,7 +24,7 @@
 #'   }
 #' 
 #' @param lambda.final Choice for final model to use lambda.1se or lambda.min, default is lambda.1se
-#' @param ... can receive parameters accepted by glmmLasso
+#' @param \dots can receive parameters accepted by glmmLasso
 #' @md
 #' @return A list of cross-validation values including: \cr 
 #' 
@@ -48,7 +51,8 @@
 #' family = gaussian(link = "identity"), kfold = 5, lambda.final = 'lambda.1se')
 
 
-cv.glmmLasso <- function(fix, rnd, data, family=gaussian(link = "identity"), 
+cv.glmmLasso <- function(fix, rnd, data, 
+                         family = stats::gaussian(link = "identity"), 
                          kfold = 5, lambdas = NULL, nlambdas = 100, 
                          lambda.min.ratio = ifelse(nobs < nvars, 0.01, 0.0001), 
                          loss,
@@ -59,15 +63,15 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian(link = "identity"),
     
     if(missing(loss))
     {
-      # switch allows us to do take the family arg as assign the appropriate 
-      # loss function 
-      loss <- switch(family$family, 
-                     'gaussian' = calc_mse,
-                     'binomial' = calc_logloss,
-                     'multinomial' = calc_multilogloss,
-                     'poisson' = calc_deviance)
+        # switch allows us to do take the family arg as assign the appropriate 
+        # loss function 
+        loss <- switch(family$family, 
+                       'gaussian' = calc_mse,
+                       'binomial' = calc_logloss,
+                       'multinomial' = calc_multilogloss,
+                       'poisson' = calc_deviance)
     }
-
+    
     x <- useful::build.x(fix, data)
     nobs <- nrow(x)
     nvars <- ncol(x)
@@ -85,7 +89,7 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian(link = "identity"),
     }
     
     
-
+    
     
     # building data frame to map a specific row to kth group
     # column 1 is the row, column 2 is a randomly assigned group
@@ -96,7 +100,7 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian(link = "identity"),
     )
     
     # sorting by group 
-    rowDF <- rowDF %>% dplyr::arrange(group)
+    rowDF <-  dplyr::arrange(rowDF, .data$group)
     
     
     #instantiating list to hold loss and models for each fold
@@ -115,15 +119,15 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian(link = "identity"),
         # for showing lambda at each iterations
         # message(sprintf('Round: %s\n ', k))
         modList_foldk[[k]] <- glmmLasso_MultLambdas(fix = fix,
-                                      rnd = rnd,
-                                      data = data %>% dplyr::slice(trainIndices),
-                                      family = family,
-                                      lambdas = lambdas,
-                                      nlambdas = nlambdas,
-                                      lambda.min.ratio = lambda.min.ratio,
-                                      ...)
+                                                    rnd = rnd,
+                                                    data = data %>% dplyr::slice(trainIndices),
+                                                    family = family,
+                                                    lambdas = lambdas,
+                                                    nlambdas = nlambdas,
+                                                    lambda.min.ratio = lambda.min.ratio,
+                                                    ...)
         
-       
+        
         
         # hacky way of getting the response variable out of the         
         response_var <- fix[[2]] %>% as.character()
@@ -131,15 +135,15 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian(link = "identity"),
         # pulling out actual data
         actualDataVector <- data %>% dplyr::slice(testIndices) %>% 
             dplyr::pull(response_var)
-       
+        
         # predicting values for each of the glmmLasso model (100 lambda) 
         # using matrix form for easier error calculation in loss()
-
+        
         predictionMatrix <- predict.glmmLasso_MultLambdas(
             object = modList_foldk[[k]],
             newdata = data %>% dplyr::slice(testIndices)
         )
-            
+        
         # employing the loss function in form loss(actual,predicted)
         # using loss function, calculating a list of loss values for each vector 
         # of prediction
@@ -150,17 +154,17 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian(link = "identity"),
         lossVecList[[k]] <- loss(actual = actualDataVector, predicted = predictionMatrix)
         # each element of this list should be 1 x nlambdas
     }
-
+    
     #building matrix (k by nlambdas) to help calculate cross-validated mean error
     cvLossMatrix <- do.call(what = rbind, args = lossVecList)
-
+    
     cvm = colMeans(cvLossMatrix)
-
+    
     # calculating sd, cv, up, down
-    cvsd <- apply(cvLossMatrix, 2, sd, na.rm = TRUE)
+    cvsd <- apply(cvLossMatrix, 2, stats::sd, na.rm = TRUE)
     cvup <- cvm + cvsd
     cvlo <- cvm - cvsd
-
+    
     
     # finding the minimum cvm value in order pull out the lambda.min out of 
     # list of lambda
@@ -183,7 +187,7 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian(link = "identity"),
         lambda.min
     }
     
-
+    
     
     glmmLasso.final <- glmmLasso::glmmLasso(fix = fix,
                                             rnd = rnd,
@@ -204,7 +208,7 @@ cv.glmmLasso <- function(fix, rnd, data, family=gaussian(link = "identity"),
                         glmmLasso.final=glmmLasso.final,
                         lambda.min=lambda.min,
                         lambda.1se=lambda.1se)
-
+    
     
     class(return_List) <- 'cv.glmmLasso'
     

@@ -4,7 +4,7 @@
 \alias{cv.glmmLasso}
 \title{cv.glmmLasso}
 \usage{
-cv.glmmLasso(fix, rnd, data, family = gaussian(link = "identity"),
+cv.glmmLasso(fix, rnd, data, family = stats::gaussian(link = "identity"),
   kfold = 5, lambdas = NULL, nlambdas = 100,
   lambda.min.ratio = ifelse(nobs < nvars, 0.01, 1e-04), loss,
   lambda.final = c("lambda.1se", "lambda.min"), ...)
@@ -37,7 +37,7 @@ cv.glmmLasso(fix, rnd, data, family = gaussian(link = "identity"),
 
 \item{lambda.final}{Choice for final model to use lambda.1se or lambda.min, default is lambda.1se}
 
-\item{...}{can receive parameters accepted by glmmLasso}
+\item{\dots}{can receive parameters accepted by glmmLasso}
 }
 \value{
 A list of cross-validation values including: \cr

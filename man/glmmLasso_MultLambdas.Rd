@@ -4,9 +4,9 @@
 \alias{glmmLasso_MultLambdas}
 \title{glmmLasso_MultLambdas}
 \usage{
-glmmLasso_MultLambdas(fix, rnd, data, family = gaussian(link = "identity"),
-  lambdas = NULL, nlambdas = 100, lambda.min.ratio = ifelse(nobs < nvars,
-  0.01, 1e-04), ...)
+glmmLasso_MultLambdas(fix, rnd, data, family = stats::gaussian(link =
+  "identity"), lambdas = NULL, nlambdas = 100,
+  lambda.min.ratio = ifelse(nobs < nvars, 0.01, 1e-04), ...)
 }
 \arguments{
 \item{fix}{A two-sided linear formula object describing the fixed-effects part of the model, with the response on the left of a ~ operator and the terms, separated by + operators, on the right. For categorical covariables use as.factor(.) in the formula. Note, that the corresponding dummies are treated as a group and are updated blockwise}
@@ -23,7 +23,7 @@ glmmLasso_MultLambdas(fix, rnd, data, family = gaussian(link = "identity"),
 
 \item{lambda.min.ratio}{Smallest value for lambda, as a fraction of lambda.max, the (data derived) entry value (i.e. the smallest value for which all coefficients are zero). The default depends on the sample size nobs relative to the number of variables nvars. If nobs > nvars, the default is 0.0001, close to zero. If nobs < nvars, the default is 0.01.}
 
-\item{...}{can receive parameters accepted by glmmLasso}
+\item{\dots}{can receive parameters accepted by glmmLasso}
 }
 \value{
 Returns a glmmLasso_MultLambdas object, whcih is list glmmLasso models for each lambda value.
@@ -40,9 +40,9 @@ library(glmmLasso)
 data("soccer")
 
 mod1 <- glmmLasso_MultLambdas(fix = points ~ transfer.spendings + 
-ball.possession + tackles , rnd = list(team =~ 1 + ave.attend), 
-data = soccer, family = poisson(link = log), 
-lambda = seq(from = 500, to = 1, by = -5))
+ball.possession + tackles , rnd = list(team =~ 1), 
+data = soccer, family = poisson(link = log)) 
+
 
  
 }

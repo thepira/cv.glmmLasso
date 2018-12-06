@@ -11,22 +11,22 @@
 #' @param lambdas The penalty parameter that controls the shrinkage of fixed terms and controls the variable selection. The optimal penalty parameter is a tuning parameter of the procedure that has to be determined, e.g. by use of information criteria or cross validation. Should inputted as a numeric vector from high to low. (See details for an example.)
 #' @param nlambdas the number of lambdas values, default value is 100.
 #' @param lambda.min.ratio Smallest value for lambda, as a fraction of lambda.max, the (data derived) entry value (i.e. the smallest value for which all coefficients are zero). The default depends on the sample size nobs relative to the number of variables nvars. If nobs > nvars, the default is 0.0001, close to zero. If nobs < nvars, the default is 0.01.
-#' @param ... can receive parameters accepted by glmmLasso
-#' @return Returns a glmmLasso_MultLambdas object, whcih is list glmmLasso models for each lambda value.  
+#' @param \dots can receive parameters accepted by glmmLasso
+#' @return Returns a glmmLasso_MultLambdas object, which is list glmmLasso models for each lambda value.  
 #' @examples
 #' 
 #' library(glmmLasso)
 #' data("soccer")
 #' 
 #' mod1 <- glmmLasso_MultLambdas(fix = points ~ transfer.spendings + 
-#' ball.possession + tackles , rnd = list(team =~ 1 + ave.attend), 
-#' data = soccer, family = poisson(link = log), 
-#' lambda = seq(from = 500, to = 1, by = -5))
+#' ball.possession + tackles , rnd = list(team =~ 1), 
+#' data = soccer, family = poisson(link = log)) 
+#' 
 #' 
 #'  
 
 glmmLasso_MultLambdas <- function(fix, rnd, data, 
-                                  family = gaussian(link = "identity"), 
+                                  family = stats::gaussian(link = "identity"), 
                                   lambdas = NULL,
                                   nlambdas = 100,
                                   lambda.min.ratio=ifelse(nobs < nvars, 0.01, 0.0001), 
@@ -43,7 +43,7 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
     nobs <- nrow(data)
     
     # defining the number of preditors based on the number of terms in fix formula
-    nvars <- length(attr(terms(fix), 'term.labels'))
+    nvars <- length(attr(stats::terms(fix), 'term.labels'))
     
     if (is.null(lambdas))
     {
@@ -138,7 +138,7 @@ predict.glmmLasso_MultLambdas <- function(object, newdata, ...)
     # pred_vec_list <- vector(mode = 'list', length = length(object))
     # storing returned vectors in a list 
     
-    pred_vec_list <- purrr::map(.x = object, .f = predict, 
+    pred_vec_list <- purrr::map(.x = object, .f = stats::predict, 
                                 newdata = newdata)
     
     pred_matrix <- do.call(what = cbind, args = pred_vec_list)

@@ -62,14 +62,14 @@ calc_multilogloss <- function(actual, predicted)
 #' @param actual actual data values 
 #' @param predicted predicted data values
 #' @param family default value is poisson
-#' @param ... can receive parameters accepted by dismo::calc.deviance
+#' @param \dots can receive parameters accepted by dismo::calc.deviance
 #' @return error between actual versus prediction
 #'
 calc_deviance <- function(actual, predicted, family = 'poisson',...)
 {
-
+    
     return(apply(predicted, 2, dismo::calc.deviance, obs = actual, family = family,
-          ...))
+                 ...))
 }
 
 
