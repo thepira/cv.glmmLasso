@@ -35,7 +35,7 @@ computeLambdaMax <- function(fix, rnd, data, scale=TRUE)
 #' @description generate lambda vector based on dataset given
 #' @author Pirapong Jitngamplang, Jared Lander
 #' @param fix A two-sided linear formula object describing the fixed-effects part of the model, with the response on the left of a ~ operator and the terms, separated by + operators, on the right. For categorical covariables use as.factor(.) in the formula. Note, that the corresponding dummies are treated as a group and are updated blockwise
-#' @param rnd A two-sided linear formula object describing the random-effects part of the model, with the grouping factor on the left of a ~ operator and the random terms, separated by + operators, on the right; aternatively, the random effects design matrix can be given directly (with suitable column names). If set to NULL, no random effects are included.
+#' @param rnd A two-sided linear formula object describing the random-effects part of the model, with the grouping factor on the left of a ~ operator and the random terms, separated by + operators, on the right; alternatively, the random effects design matrix can be given directly (with suitable column names). If set to NULL, no random effects are included.
 #' @param data The data frame containing the variables named in formula.
 #' @param nlambdas the number of lambdas values, default value is 100 if lambdas is not user-supplied
 #' @param lambda.min.ratio Smallest value for lambda, as a fraction of lambda.max, the (data derived) entry value (i.e. the smallest value for which all coefficients are zero). The default depends on the sample size nobs relative to the number of variables nvars. If nobs > nvars, the default is 0.0001, close to zero. If nobs < nvars, the default is 0.01.
