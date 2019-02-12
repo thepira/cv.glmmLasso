@@ -10,7 +10,7 @@ buildLambdas(fix, rnd, data, nlambdas = 100,
 \arguments{
 \item{fix}{A two-sided linear formula object describing the fixed-effects part of the model, with the response on the left of a ~ operator and the terms, separated by + operators, on the right. For categorical covariables use as.factor(.) in the formula. Note, that the corresponding dummies are treated as a group and are updated blockwise}
 
-\item{rnd}{A two-sided linear formula object describing the random-effects part of the model, with the grouping factor on the left of a ~ operator and the random terms, separated by + operators, on the right; aternatively, the random effects design matrix can be given directly (with suitable column names). If set to NULL, no random effects are included.}
+\item{rnd}{A two-sided linear formula object describing the random-effects part of the model, with the grouping factor on the left of a ~ operator and the random terms, separated by + operators, on the right; alternatively, the random effects design matrix can be given directly (with suitable column names). If set to NULL, no random effects are included.}
 
 \item{data}{The data frame containing the variables named in formula.}
 

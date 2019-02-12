@@ -26,7 +26,7 @@ glmmLasso_MultLambdas(fix, rnd, data, family = stats::gaussian(link =
 \item{\dots}{can receive parameters accepted by glmmLasso}
 }
 \value{
-Returns a glmmLasso_MultLambdas object, whcih is list glmmLasso models for each lambda value.
+Returns a glmmLasso_MultLambdas object, which is list glmmLasso models for each lambda value.
 }
 \description{
 Variable selection using glmmLasso for multiple lambdas values
