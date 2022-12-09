@@ -88,7 +88,9 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
     # builing the first Delta.start, transpose required to make dimension
     
     Delta.start <- first_fit$Deltamatrix[first_fit$conv.step, ] %>% t()
-    Q.start <- first_fit$Q_long[[first_fit$conv.step + 1]]
+    Q.start <- list()
+    Q.start[[1]] <- first_fit$Q_long[[first_fit$conv.step + 1]]
+    if(nrow(Q.start[[1]])==1) Q.start[[1]] <- c(Q.start[[1]])
     
     for (l in seq_along(lambdas))
     {
@@ -102,12 +104,12 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
                                     family = family,
                                     lambda = lambdas[l],
                                     control = list(start=Delta.start[l,],
-                                                   q_start=Q.start[l]),...)
+                                                   q_start=Q.start[[l]]),...)
         
         # storing model objects before storing to modList
         fit$lambda <- lambdas[l]
         fit$Delta.start <- Delta.start[l,]
-        fit$Q.start <- Q.start[l]
+        fit$Q.start <- Q.start[[l]]
         fit$data <- data
         fit$rnd <- rnd
         fit$fix <- fix
@@ -115,7 +117,8 @@ glmmLasso_MultLambdas <- function(fix, rnd, data,
         
         modList[[l]] <- fit
         Delta.start <- rbind(Delta.start, fit$Deltamatrix[fit$conv.step, ])
-        Q.start <- c(Q.start, fit$Q_long[[fit$conv.step + 1]])
+        Q.start[[l+1]] <- fit$Q_long[[fit$conv.step + 1]]
+        if(nrow(Q.start[[l+1]])==1) Q.start[[l+1]] <- c(Q.start[[l+1]])
         
         
         
