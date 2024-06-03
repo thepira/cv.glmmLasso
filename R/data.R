@@ -1,7 +1,7 @@
 NULL
 
 #' The soccer data contains different covariables for the teams that played in 
-#' the first Germna soccer division, the Bundesliga, in the seasons 2007/2008 
+#' the first German soccer division, the Bundesliga, in the seasons 2007/2008 
 #' until 2009/2010.
 #'
 #' A dataset containing the prices and other attributes of almost 54,000
