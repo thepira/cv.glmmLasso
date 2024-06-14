@@ -8,7 +8,7 @@ Description: This performs cross-validation for multi-level lasso using glmmLass
 Depends: R (>= 2.10)
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 BugReports: https://github.com/thepira/cv.glmmLasso/issues
 Imports: glmmLasso,
     tibble,
