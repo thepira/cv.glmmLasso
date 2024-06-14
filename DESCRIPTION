@@ -1,7 +1,9 @@
 Package: cv.glmmLasso
 Title: Cross-validation for multi-level lasso 
 Version: 0.0.0.9000
-Authors@R: c(person('Pirapong', 'Jitngamplang', email = 'pira.package@gmail.com', role = c('cre')), person('Jared', 'Lander', email = 'package@jaredlander.com', role = c('aut')))
+Authors@R: c(person('Pirapong', 'Jitngamplang', email = 'pira.package@gmail.com', role = c('cre')), 
+    person('Jared', 'Lander', email = 'package@jaredlander.com', role = c('aut')),
+    person("Mollie","Brooks", role = "ctb", comment=c(ORCID="0000-0001-6963-8326") ))
 Description: This performs cross-validation for multi-level lasso using glmmLasso.
 Depends: R (>= 2.10)
 License: MIT + file LICENSE

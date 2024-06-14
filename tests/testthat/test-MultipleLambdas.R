@@ -1,5 +1,5 @@
 context("MultipleLambdas")
-
+data("soccer", package = "glmmLasso")
 
 mod_intercept_slope <- glmmLasso_MultLambdas(fix = points ~ transfer.spendings + ave.unfair.score + ball.possession + tackles + ave.attend + sold.out, 
                              rnd = list(team =~ 1),
